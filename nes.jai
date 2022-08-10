@@ -12,8 +12,6 @@ main :: () {
     cpu.interrupt_disable = true;
     cpu.pc = read_word(0xFFFC);
 
-    tick(read_byte(cpu.pc));
-
     print("%\n", cartridge);
     print("%\n", cpu);
 }
