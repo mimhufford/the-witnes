@@ -19,29 +19,60 @@ main :: () {
 tick :: (opcode: u8) {
     using cpu;
 
-    set_negative_and_zero_flags :: () #expand {
-        negative = `value & 0b10000000 != 0;
-        zero     = `value == 0;
+    set_negative_and_zero_flags :: inline (value: u8) {
+        cpu.negative = value & 0b10000000 != 0;
+        cpu.zero     = value == 0;
+    }
+
+    push_stack :: inline (value: u8) {
+        write_byte(cast(u16)0x100 | cpu.sp, value);
+        cpu.sp -= 1;
+    }
+    
+    push_flags :: inline (bit_5: u8, bit_4: u8) {
+        flags := (cast(u8)cpu.negative)          << 7 |
+                 (cast(u8)cpu.overflow)          << 6 |
+                 (cast(u8)bit_5)                 << 5 |
+                 (cast(u8)bit_4)                 << 4 |
+                 (cast(u8)cpu.decimal)           << 3 |
+                 (cast(u8)cpu.interrupt_disable) << 2 |
+                 (cast(u8)cpu.zero)              << 1 |
+                 (cast(u8)cpu.carry)             << 0;
+        push_stack(flags);
     }
 
     if opcode == {
+        case 0x00; // BRK
+        push_stack(cast(u8)(pc >> 8));
+        push_stack(cast(u8)(pc >> 0));
+        interrupt_disable = true;
+        push_flags(1, 1);
+        clock += 7;
+        pc     = read_word(0xFFFE);
+
+        case 0x48; // PHA
+        write_byte(cast(u16)0x100 | sp, acc);
+        sp    -= 1;
+        clock += 3;
+        pc    += 1;
+
         case 0xA1; // LDA izx
         value := read_byte(read_byte(pc + 1) + x);
-        set_negative_and_zero_flags();
+        set_negative_and_zero_flags(value);
         acc    = value;
         clock += 6;
         pc    += 2;
 
         case 0xA5; // LDA zp
         value := read_byte(read_byte(pc + 1));
-        set_negative_and_zero_flags();
+        set_negative_and_zero_flags(value);
         acc    = value;
         clock += 3;
         pc    += 2;
 
         case 0xA9; // LDA imm
         value := read_byte(pc + 1);
-        set_negative_and_zero_flags();
+        set_negative_and_zero_flags(value);
         acc    = value;
         clock += 2;
         pc    += 2;
@@ -92,7 +123,7 @@ cpu : struct {
     zero              : bool;
     interrupt_disable : bool;
     decimal           : bool;
-    // @TODO: b : 2 bits
+    // b_flag         : 0b00;
     overflow          : bool;
     negative          : bool;
     
