@@ -8,12 +8,47 @@ main :: () {
     if !ok { print("Could not load cartridge\n"); return; }
 
     // initalise the system with the default power on state
-    cpu.s = 0xFD;
+    cpu.sp = 0xFD;
     cpu.interrupt_disable = true;
     cpu.pc = read_word(0xFFFC);
 
     print("%\n", cartridge);
     print("%\n", cpu);
+}
+
+tick :: (opcode: u8) {
+    using cpu;
+
+    set_negative_and_zero_flags :: () #expand {
+        negative = `value & 0b10000000 != 0;
+        zero     = `value == 0;
+    }
+
+    if opcode == {
+        case 0xA1; // LDA izx
+        value := read_byte(read_byte(pc + 1) + x);
+        set_negative_and_zero_flags();
+        acc    = value;
+        clock += 6;
+        pc    += 2;
+
+        case 0xA5; // LDA zp
+        value := read_byte(read_byte(pc + 1));
+        set_negative_and_zero_flags();
+        acc    = value;
+        clock += 3;
+        pc    += 2;
+
+        case 0xA9; // LDA imm
+        value := read_byte(pc + 1);
+        set_negative_and_zero_flags();
+        acc    = value;
+        clock += 2;
+        pc    += 2;
+
+        case;
+        assert(false, "Unhandled opcode [%]", opcode);
+    }
 }
 
 read_word :: (address: u16) -> u16 {
@@ -46,12 +81,12 @@ ram : [2048]u8;
 ppu : [   8]u8;
 apu : [  32]u8;
 cpu : struct {
-    a  : u8;  // accumulator
-    x  : u8;  // indexes
-    y  : u8;  // indexes
-    pc : u16; // program counter
-    s  : u8;  // stack pointer
-    
+    acc : u8;  // accumulator
+    x   : u8;  // indexes
+    y   : u8;  // indexes
+    pc  : u16; // program counter
+    sp  : u8;  // stack pointer
+
     // status register byte unpacked for convenience
     carry             : bool;
     zero              : bool;
@@ -60,6 +95,8 @@ cpu : struct {
     // @TODO: b : 2 bits
     overflow          : bool;
     negative          : bool;
+    
+    clock : u64; // how many cycles the CPU has performed
 }
 
 #import "Basic";
