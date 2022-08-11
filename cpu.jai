@@ -62,7 +62,7 @@ tick :: (opcode: u8) {
         pc    += 1;
 
         case 0xA1; // LDA izx
-        value := read_byte(read_byte(pc + 1) + x);
+        value := read_byte(read_word(read_byte(pc + 1) + x));
         set_negative_and_zero_flags(value);
         acc    = value;
         clock += 6;
@@ -81,6 +81,44 @@ tick :: (opcode: u8) {
         acc    = value;
         clock += 2;
         pc    += 2;
+
+        case 0xAD; // LDA abs
+        value := read_byte(read_word(pc + 1));
+        set_negative_and_zero_flags(value);
+        acc    = value;
+        clock += 4;
+        pc    += 3;
+
+        case 0xB1; // LDA izy
+        addr  := read_word(read_byte(pc + 1));
+        value := read_byte(addr + y);
+        set_negative_and_zero_flags(value);
+        acc    = value;
+        clock += ifx (addr & 0xFF00) != ((addr + y) & 0xFF00) then 6 else 5;
+        pc    += 2;
+
+        case 0xB5; // LDA zpx
+        value := read_byte(read_byte(pc + 1) + x);
+        set_negative_and_zero_flags(value);
+        acc    = value;
+        clock += 4;
+        pc    += 2;
+
+        case 0xB9; // LDA aby
+        addr  := read_word(pc + 1);
+        value := read_byte(addr + y);
+        set_negative_and_zero_flags(value);
+        acc    = value;
+        clock += ifx (addr & 0xFF00) != ((addr + y) & 0xFF00) then 5 else 4;
+        pc    += 3;
+        
+        case 0xBD; // LDA abx
+        addr  := read_word(pc + 1);
+        value := read_byte(addr + x);
+        set_negative_and_zero_flags(value);
+        acc    = value;
+        clock += ifx (addr & 0xFF00) != ((addr + x) & 0xFF00) then 5 else 4;
+        pc    += 3;
 
         case;
         assert(false, "Unhandled opcode [%]", opcode);
