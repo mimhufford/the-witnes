@@ -14,7 +14,7 @@ CPU :: struct {
     overflow          : bool;
     negative          : bool;
     
-    clock : u64; // how many cycles the CPU has performed
+    clock : s64; // how many cycles the CPU has performed
 }
 
 read_word :: (address: u16) -> u16 {
@@ -203,6 +203,46 @@ tick :: (opcode: u8) {
         y      = value;
         clock += ifx (addr & 0xFF00) != ((addr + x) & 0xFF00) then 5 else 4;
         pc    += 3;
+
+        //
+        // STA
+        //
+
+        case 0x81; // STA izx
+        write_byte(read_word(read_byte(pc + 1) + x), acc);
+        clock += 6;
+        pc    += 2;
+
+        case 0x85; // STA zp
+        write_byte(read_byte(pc + 1), acc);
+        clock += 3;
+        pc    += 2;
+
+        case 0x8D; // STA abs
+        write_byte(read_word(pc + 1), acc);
+        clock += 4;
+        pc    += 3;
+        
+        case 0x91; // STA izy
+        write_byte(read_word(read_byte(pc + 1)) + y, acc);
+        clock += 6;
+        pc    += 2;
+
+        case 0x95; // STA zpx
+        write_byte(read_byte(pc + 1) + x, acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x99; // STA aby
+        write_byte(read_word(pc + 1) + y, acc);
+        clock += 5;
+        pc    += 3;
+
+        case 0x9D; // STA abx
+        write_byte(read_word(pc + 1) + x, acc);
+        clock += 5;
+        pc    += 3;
+
         case;
         assert(false, "Unhandled opcode [%]", opcode);
     }
