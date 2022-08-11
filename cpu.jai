@@ -164,6 +164,45 @@ tick :: (opcode: u8) {
         clock += ifx (addr & 0xFF00) != ((addr + y) & 0xFF00) then 5 else 4;
         pc    += 3;
         
+        //
+        // LDY
+        //
+
+        case 0xA0; // LDY imm
+        value := read_byte(pc + 1);
+        set_negative_and_zero_flags(value);
+        y      = value;
+        clock += 2;
+        pc    += 2;
+
+        case 0xA4; // LDY zp
+        value := read_byte(read_byte(pc + 1));
+        set_negative_and_zero_flags(value);
+        y      = value;
+        clock += 3;
+        pc    += 2;
+
+        case 0xAC; // LDY abs
+        value := read_byte(read_word(pc + 1));
+        set_negative_and_zero_flags(value);
+        y      = value;
+        clock += 4;
+        pc    += 3;
+
+        case 0xB4; // LDY zpx
+        value := read_byte(read_byte(pc + 1) + x);
+        set_negative_and_zero_flags(value);
+        y      = value;
+        clock += 4;
+        pc    += 2;
+
+        case 0xBC; // LDY abx
+        addr  := read_word(pc + 1);
+        value := read_byte(addr + x);
+        set_negative_and_zero_flags(value);
+        y      = value;
+        clock += ifx (addr & 0xFF00) != ((addr + x) & 0xFF00) then 5 else 4;
+        pc    += 3;
         case;
         assert(false, "Unhandled opcode [%]", opcode);
     }
