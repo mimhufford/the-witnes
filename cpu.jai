@@ -243,6 +243,44 @@ tick :: (opcode: u8) {
         clock += 5;
         pc    += 3;
 
+        //
+        // STX
+        //
+
+        case 0x86; // STX zp
+        write_byte(read_byte(pc + 1), x);
+        clock += 3;
+        pc    += 2;
+
+        case 0x8E; // STX abs
+        write_byte(read_word(pc + 1), x);
+        clock += 4;
+        pc    += 3;
+
+        case 0x96; // STX zpy
+        write_byte(read_byte(pc + 1) + y, x);
+        clock += 4;
+        pc    += 2;
+
+        //
+        // STY
+        //
+
+        case 0x84; // STY zp
+        write_byte(read_byte(pc + 1), y);
+        clock += 3;
+        pc    += 2;
+
+        case 0x8C; // STY abs
+        write_byte(read_word(pc + 1), y);
+        clock += 4;
+        pc    += 3;
+
+        case 0x94; // STY zpx
+        write_byte(read_byte(pc + 1) + x, y);
+        clock += 4;
+        pc    += 2;
+
         case;
         assert(false, "Unhandled opcode [%]", opcode);
     }
