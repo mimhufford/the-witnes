@@ -61,6 +61,10 @@ tick :: (opcode: u8) {
         clock += 3;
         pc    += 1;
 
+        //
+        // LDA
+        //
+
         case 0xA1; // LDA izx
         value := read_byte(read_word(read_byte(pc + 1) + x));
         set_negative_and_zero_flags(value);
@@ -120,6 +124,46 @@ tick :: (opcode: u8) {
         clock += ifx (addr & 0xFF00) != ((addr + x) & 0xFF00) then 5 else 4;
         pc    += 3;
 
+        //
+        // LDX
+        //
+
+        case 0xA2; // LDX imm
+        value := read_byte(pc + 1);
+        set_negative_and_zero_flags(value);
+        x      = value;
+        clock += 2;
+        pc    += 2;
+
+        case 0xA6; // LDX zp
+        value := read_byte(read_byte(pc + 1));
+        set_negative_and_zero_flags(value);
+        x      = value;
+        clock += 3;
+        pc    += 2;
+
+        case 0xAE; // LDX abs
+        value := read_byte(read_word(pc + 1));
+        set_negative_and_zero_flags(value);
+        x      = value;
+        clock += 4;
+        pc    += 3;
+
+        case 0xB6; // LDX zpy
+        value := read_byte(read_byte(pc + 1) + y);
+        set_negative_and_zero_flags(value);
+        x      = value;
+        clock += 4;
+        pc    += 2;
+
+        case 0xBE; // LDX aby
+        addr  := read_word(pc + 1);
+        value := read_byte(addr + y);
+        set_negative_and_zero_flags(value);
+        x      = value;
+        clock += ifx (addr & 0xFF00) != ((addr + y) & 0xFF00) then 5 else 4;
+        pc    += 3;
+        
         case;
         assert(false, "Unhandled opcode [%]", opcode);
     }
