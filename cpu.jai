@@ -55,12 +55,6 @@ tick :: (opcode: u8) {
         clock += 7;
         pc     = read_word(0xFFFE);
 
-        case 0x48; // PHA
-        write_byte(cast(u16)0x100 | sp, acc);
-        sp    -= 1;
-        clock += 3;
-        pc    += 1;
-
         case 0xAA; // TAX
         x = acc;
         set_negative_and_zero_flags(acc);
@@ -94,6 +88,33 @@ tick :: (opcode: u8) {
         case 0x9A; // TXS
         sp = x;
         clock += 2;
+        pc    += 1;
+
+        case 0x68; // PLA
+        acc = pull_stack();
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 1;
+
+        case 0x48; // PHA
+        push_stack(acc);
+        clock += 3;
+        pc    += 1;
+
+        case 0x28; // PLP
+        flags := pull_stack();
+        negative          = flags & 0b_1000_0000 > 0;
+        overflow          = flags & 0b_0100_0000 > 0;
+        decimal           = flags & 0b_0000_1000 > 0;
+        interrupt_disable = flags & 0b_0000_0100 > 0;
+        zero              = flags & 0b_0000_0010 > 0;
+        carry             = flags & 0b_0000_0001 > 0;
+        clock += 4;
+        pc    += 1;
+
+        case 0x08; // PHP
+        push_flags(1, 1);
+        clock += 3;
         pc    += 1;
 
         //
@@ -326,6 +347,12 @@ tick :: (opcode: u8) {
 set_negative_and_zero_flags :: inline (value: u8) {
     cpu.negative = value & 0b10000000 != 0;
     cpu.zero     = value == 0;
+}
+
+pull_stack :: inline () -> u8 {
+    cpu.sp += 1;
+    result := read_byte(cast(u16)0x100 | cpu.sp);
+    return result;
 }
 
 push_stack :: inline (value: u8) {
