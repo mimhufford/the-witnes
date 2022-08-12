@@ -61,6 +61,41 @@ tick :: (opcode: u8) {
         clock += 3;
         pc    += 1;
 
+        case 0xAA; // TAX
+        x = acc;
+        set_negative_and_zero_flags(acc);
+        clock += 2;
+        pc    += 1;
+
+        case 0x8A; // TXA
+        acc = x;
+        set_negative_and_zero_flags(x);
+        clock += 2;
+        pc    += 1;
+
+        case 0xA8; // TAY
+        y = acc;
+        set_negative_and_zero_flags(acc);
+        clock += 2;
+        pc    += 1;
+
+        case 0x98; // TYA
+        acc = y;
+        set_negative_and_zero_flags(y);
+        clock += 2;
+        pc    += 1;
+
+        case 0xBA; // TSX
+        x = sp;
+        set_negative_and_zero_flags(sp);
+        clock += 2;
+        pc    += 1;
+
+        case 0x9A; // TXS
+        sp = x;
+        clock += 2;
+        pc    += 1;
+
         //
         // LDA
         //
