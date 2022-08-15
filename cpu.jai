@@ -68,7 +68,7 @@ tick :: (opcode: u8) {
         case 0x01; // ORA
         acc   |= read_byte(indirect_zero_page_x());
         set_negative_and_zero_flags(acc);
-        // clock += 6;
+        clock += 6;
         pc    += 2;
 
         case 0x11; // ORA
@@ -91,6 +91,54 @@ tick :: (opcode: u8) {
 
         case 0x19; // ORA
         acc   |= read_byte(absolute_y(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x29; // AND
+        acc   &= immediate();
+        set_negative_and_zero_flags(acc);
+        clock += 2;
+        pc    += 2;
+
+        case 0x25; // AND
+        acc   &= read_byte(zero_page());
+        set_negative_and_zero_flags(acc);
+        clock += 3;
+        pc    += 2;
+
+        case 0x35; // AND
+        acc   &= read_byte(zero_page_x());
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x21; // AND
+        acc   &= read_byte(indirect_zero_page_x());
+        set_negative_and_zero_flags(acc);
+        clock += 6;
+        pc    += 2;
+
+        case 0x31; // AND
+        acc   &= read_byte(indirect_zero_page_y(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 5;
+        pc    += 2;
+
+        case 0x2D; // AND
+        acc   &= read_byte(absolute());
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x3D; // AND
+        acc   &= read_byte(absolute_x(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x39; // AND
+        acc   &= read_byte(absolute_y(extra_cycle = true));
         set_negative_and_zero_flags(acc);
         clock += 4;
         pc    += 2;
