@@ -143,6 +143,54 @@ tick :: (opcode: u8) {
         clock += 4;
         pc    += 2;
 
+        case 0x49; // EOR
+        acc   ^= immediate();
+        set_negative_and_zero_flags(acc);
+        clock += 2;
+        pc    += 2;
+
+        case 0x45; // EOR
+        acc   ^= read_byte(zero_page());
+        set_negative_and_zero_flags(acc);
+        clock += 3;
+        pc    += 2;
+
+        case 0x55; // EOR
+        acc   ^= read_byte(zero_page_x());
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x41; // EOR
+        acc   ^= read_byte(indirect_zero_page_x());
+        set_negative_and_zero_flags(acc);
+        clock += 6;
+        pc    += 2;
+
+        case 0x51; // EOR
+        acc   ^= read_byte(indirect_zero_page_y(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 5;
+        pc    += 2;
+
+        case 0x4D; // EOR
+        acc   ^= read_byte(absolute());
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x5D; // EOR
+        acc   ^= read_byte(absolute_x(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x59; // EOR
+        acc   ^= read_byte(absolute_y(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
         case 0x10; // BPL
         branch_relative(!negative);
 
