@@ -55,19 +55,19 @@ tick :: (opcode: u8) {
         acc   |= read_byte(absolute());
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x1D; // ORA
         acc   |= read_byte(absolute_x(extra_cycle = true));
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x19; // ORA
         acc   |= read_byte(absolute_y(extra_cycle = true));
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x29; // AND
         acc   &= immediate();
@@ -103,19 +103,19 @@ tick :: (opcode: u8) {
         acc   &= read_byte(absolute());
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x3D; // AND
         acc   &= read_byte(absolute_x(extra_cycle = true));
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x39; // AND
         acc   &= read_byte(absolute_y(extra_cycle = true));
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x49; // EOR
         acc   ^= immediate();
@@ -151,19 +151,51 @@ tick :: (opcode: u8) {
         acc   ^= read_byte(absolute());
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x5D; // EOR
         acc   ^= read_byte(absolute_x(extra_cycle = true));
         set_negative_and_zero_flags(acc);
         clock += 4;
-        pc    += 2;
+        pc    += 3;
 
         case 0x59; // EOR
         acc   ^= read_byte(absolute_y(extra_cycle = true));
         set_negative_and_zero_flags(acc);
         clock += 4;
+        pc    += 3;
+
+        case 0xC6; // DEC
+        addr  := zero_page();
+        val   := read_byte(addr) - 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 5;
         pc    += 2;
+
+        case 0xD6; // DEC
+        addr  := zero_page_x();
+        val   := read_byte(addr) - 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 6;
+        pc    += 2;
+
+        case 0xCE; // DEC
+        addr  := absolute();
+        val   := read_byte(addr) - 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 6;
+        pc    += 3;
+
+        case 0xDE; // DEC
+        addr  := absolute_x();
+        val   := read_byte(addr) - 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 7;
+        pc    += 3;
 
         case 0xCA; // DEX
         x     -= 1;
