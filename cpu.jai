@@ -47,6 +47,54 @@ tick :: (opcode: u8) {
     using cpu;
 
     if opcode == {
+        case 0x09; // ORA
+        acc   |= immediate();
+        set_negative_and_zero_flags(acc);
+        clock += 2;
+        pc    += 2;
+
+        case 0x05; // ORA
+        acc   |= read_byte(zero_page());
+        set_negative_and_zero_flags(acc);
+        clock += 3;
+        pc    += 2;
+
+        case 0x15; // ORA
+        acc   |= read_byte(zero_page_x());
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x01; // ORA
+        acc   |= read_byte(indirect_zero_page_x());
+        set_negative_and_zero_flags(acc);
+        // clock += 6;
+        pc    += 2;
+
+        case 0x11; // ORA
+        acc   |= read_byte(indirect_zero_page_y(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 5;
+        pc    += 2;
+
+        case 0x0D; // ORA
+        acc   |= read_byte(absolute());
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x1D; // ORA
+        acc   |= read_byte(absolute_x(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x19; // ORA
+        acc   |= read_byte(absolute_y(extra_cycle = true));
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
         case 0x10; // BPL
         branch_relative(!negative);
 
@@ -251,11 +299,10 @@ tick :: (opcode: u8) {
         pc    += 3;
 
         case 0xB1; // LDA
-        address, extra_cycle := indirect_zero_page_y();
-        value := read_byte(address);
+        value := read_byte(indirect_zero_page_y(extra_cycle = true));
         set_negative_and_zero_flags(value);
         acc    = value;
-        clock += 5 + extra_cycle;
+        clock += 5;
         pc    += 2;
 
         case 0xB5; // LDA
@@ -266,19 +313,17 @@ tick :: (opcode: u8) {
         pc    += 2;
 
         case 0xB9; // LDA
-        address, extra_cycle := absolute_y();
-        value := read_byte(address);
+        value := read_byte(absolute_y(extra_cycle = true));
         set_negative_and_zero_flags(value);
         acc    = value;
-        clock += 4 + extra_cycle;
+        clock += 4;
         pc    += 3;
         
         case 0xBD; // LDA
-        address, extra_cycle := absolute_x();
-        value := read_byte(address);
+        value := read_byte(absolute_x(extra_cycle = true));
         set_negative_and_zero_flags(value);
         acc    = value;
-        clock += 4 + extra_cycle;
+        clock += 4;
         pc    += 3;
 
         case 0xA2; // LDX
@@ -310,11 +355,10 @@ tick :: (opcode: u8) {
         pc    += 2;
 
         case 0xBE; // LDX
-        address, extra_cycle := absolute_y();
-        value := read_byte(address);
+        value := read_byte(absolute_y(extra_cycle = true));
         set_negative_and_zero_flags(value);
         x      = value;
-        clock += 4 + extra_cycle;
+        clock += 4;
         pc    += 3;
         
         case 0xA0; // LDY
@@ -346,11 +390,10 @@ tick :: (opcode: u8) {
         pc    += 2;
 
         case 0xBC; // LDY
-        address, extra_cycle := absolute_x();
-        value := read_byte(address);
+        value := read_byte(absolute_x(extra_cycle = true));
         set_negative_and_zero_flags(value);
         y      = value;
-        clock += 4 + extra_cycle;
+        clock += 4;
         pc    += 3;
 
         case 0x81; // STA
@@ -439,10 +482,10 @@ indirect_zero_page_x :: inline () -> u16 {
     return read_word(read_byte(cpu.pc + 1) + cpu.x);
 }
 
-indirect_zero_page_y :: inline () -> u16, s64 {
-    address := read_word(read_byte(cpu.pc + 1));
-    crossed := (address & 0xFF00) != ((address + cpu.y) & 0xFF00);
-    return address + cpu.y, ifx crossed then 1 else 0;
+indirect_zero_page_y :: inline (extra_cycle := false) -> u16 {
+    addr := read_word(read_byte(cpu.pc + 1));
+    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.y) & 0xFF00) cpu.clock += 1;
+    return addr + cpu.y;
 }
 
 zero_page :: inline () -> u8 {
@@ -461,16 +504,16 @@ absolute :: inline () -> u16 {
     return read_word(cpu.pc + 1);
 }
 
-absolute_x :: inline () -> u16, s64 {
-    address := read_word(cpu.pc + 1);
-    crossed := (address & 0xFF00) != ((address + cpu.x) & 0xFF00);
-    return address + cpu.x, ifx crossed then 1 else 0;
+absolute_x :: inline (extra_cycle := false) -> u16 {
+    addr := read_word(cpu.pc + 1);
+    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.x) & 0xFF00) cpu.clock += 1;
+    return addr + cpu.x;
 }
 
-absolute_y :: inline () -> u16, s64 {
-    address := read_word(cpu.pc + 1);
-    crossed := (address & 0xFF00) != ((address + cpu.y) & 0xFF00);
-    return address + cpu.y, ifx crossed then 1 else 0;
+absolute_y :: inline (extra_cycle := false) -> u16 {
+    addr := read_word(cpu.pc + 1);
+    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.y) & 0xFF00) cpu.clock += 1;
+    return addr + cpu.y;
 }
 
 branch_relative :: inline (condition: bool) {
