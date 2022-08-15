@@ -197,6 +197,38 @@ tick :: (opcode: u8) {
         clock += 7;
         pc    += 3;
 
+        case 0xE6; // INC
+        addr  := zero_page();
+        val   := read_byte(addr) + 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 5;
+        pc    += 2;
+
+        case 0xF6; // INC
+        addr  := zero_page_x();
+        val   := read_byte(addr) + 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 6;
+        pc    += 2;
+
+        case 0xEE; // INC
+        addr  := absolute();
+        val   := read_byte(addr) + 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 6;
+        pc    += 3;
+
+        case 0xFE; // INC
+        addr  := absolute_x();
+        val   := read_byte(addr) + 1;
+        write_byte(addr, val);
+        set_negative_and_zero_flags(val);
+        clock += 7;
+        pc    += 3;
+
         case 0xCA; // DEX
         x     -= 1;
         set_negative_and_zero_flags(x);
