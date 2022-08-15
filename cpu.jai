@@ -47,13 +47,120 @@ tick :: (opcode: u8) {
     using cpu;
 
     if opcode == {
+        case 0x10; // BPL
+        branch_relative(!negative);
+
+        case 0x30; // BMI
+        branch_relative(negative);
+
+        case 0x50; // BVC
+        branch_relative(!overflow);
+
+        case 0x70; // BVS
+        branch_relative(overflow);
+
+        case 0x90; // BCC
+        branch_relative(!carry);
+
+        case 0xB0; // BCS
+        branch_relative(carry);
+
+        case 0xD0; // BNE
+        branch_relative(!zero);
+
+        case 0xE0; // BEQ
+        branch_relative(zero);
+
         case 0x00; // BRK
-        push_stack(cast(u8)(pc >> 8));
-        push_stack(cast(u8)(pc >> 0));
-        interrupt_disable = true;
+        push_stack(cast(u8)((pc + 1) >> 8));
+        push_stack(cast(u8)((pc + 1) >> 0));
         push_flags(1, 1);
+        interrupt_disable = true;
         clock += 7;
         pc     = read_word(0xFFFE);
+
+        case 0x40; // RTI
+        pull_flags();
+        clock += 6;
+        pc     = pull_stack() << 0;
+        pc    |= pull_stack() << 8;
+
+        case 0x20; // JSR
+        push_stack(cast(u8)((pc + 2) >> 8));
+        push_stack(cast(u8)((pc + 2) >> 0));
+        clock += 6;
+        pc     = read_word(pc + 1);
+
+        case 0x60; // RTS
+        clock += 6;
+        pc     = pull_stack() << 0;
+        pc    |= pull_stack() << 8;
+        pc    += 1;
+
+        case 0x4C; // JMP abs
+        clock += 3;
+        pc     = read_word(pc + 1);
+
+        case 0x6C; // JMP ind
+        clock += 5;
+        pc     = read_word(read_word(pc + 1));
+        // @TODO: if first read is the last byte of a page boundary
+        //        then the second byte should wrap within the page
+
+        case 0x24; // BIT zp
+        value   := read_byte(read_byte(pc + 1));
+        zero     = (value & acc) == 0;
+        negative = value & 0b_1000_0000 != 0;
+        overflow = value & 0b_0100_0000 != 0;
+        clock   += 3;
+        pc      += 2;
+
+        case 0x2C; // BIT abs
+        value   := read_byte(read_word(pc + 1));
+        zero     = (value & acc) == 0;
+        negative = value & 0b_1000_0000 != 0;
+        overflow = value & 0b_0100_0000 != 0;
+        clock   += 4;
+        pc      += 3;
+
+        case 0x18; // CLC
+        carry = false;
+        clock += 2;
+        pc    += 1;
+
+        case 0x38; // SEC
+        carry = true;
+        clock += 2;
+        pc    += 1;
+
+        case 0xD8; // CLD
+        decimal = false;
+        clock += 2;
+        pc    += 1;
+
+        case 0xF8; // SED
+        decimal = true;
+        clock += 2;
+        pc    += 1;
+
+        case 0x58; // CLI
+        interrupt_disable = false;
+        clock += 2;
+        pc    += 1;
+
+        case 0x78; // SEI
+        interrupt_disable = true;
+        clock += 2;
+        pc    += 1;
+
+        case 0xB8; // CLV
+        overflow = false;
+        clock += 2;
+        pc    += 1;
+
+        case 0xEA; // NOP
+        clock += 2;
+        pc    += 1;
 
         case 0xAA; // TAX
         x = acc;
@@ -344,6 +451,17 @@ tick :: (opcode: u8) {
 
 #scope_file
 
+branch_relative :: inline (condition: bool) {
+    cpu.clock += 2;
+    if condition {
+        addr := cpu.pc;
+        cpu.pc = cast(u16)(cast(s16)cpu.pc + cast(s8)(read_byte(cpu.pc + 1)));
+        cpu.clock += ifx (addr & 0xFF00) != (cpu.pc & 0xFF00) then 2 else 1;
+    } else {
+        cpu.pc += 2;
+    }
+}
+
 set_negative_and_zero_flags :: inline (value: u8) {
     cpu.negative = value & 0b10000000 != 0;
     cpu.zero     = value == 0;
@@ -358,6 +476,16 @@ pull_stack :: inline () -> u8 {
 push_stack :: inline (value: u8) {
     write_byte(cast(u16)0x100 | cpu.sp, value);
     cpu.sp -= 1;
+}
+
+pull_flags :: inline () {
+    flags := pull_stack();
+    cpu.negative          = flags & (1 << 7) != 0;
+    cpu.overflow          = flags & (1 << 6) != 0;
+    cpu.decimal           = flags & (1 << 3) != 0;
+    cpu.interrupt_disable = flags & (1 << 2) != 0;
+    cpu.zero              = flags & (1 << 1) != 0;
+    cpu.carry             = flags & (1 << 0) != 0;
 }
 
 push_flags :: inline (bit_5: u8, bit_4: u8) {
