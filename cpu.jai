@@ -165,6 +165,30 @@ tick :: (opcode: u8) {
         clock += 4;
         pc    += 2;
 
+        case 0xCA; // DEX
+        x     -= 1;
+        set_negative_and_zero_flags(x);
+        clock += 2;
+        pc    += 1;
+
+        case 0x88; // DEY
+        y     -= 1;
+        set_negative_and_zero_flags(y);
+        clock += 2;
+        pc    += 1;
+
+        case 0xE8; // INX
+        x     += 1;
+        set_negative_and_zero_flags(x);
+        clock += 2;
+        pc    += 1;
+
+        case 0xC8; // INY
+        y     += 1;
+        set_negative_and_zero_flags(y);
+        clock += 2;
+        pc    += 1;
+
         case 0x10; // BPL
         branch_relative(!negative);
 
