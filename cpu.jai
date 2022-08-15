@@ -97,26 +97,24 @@ tick :: (opcode: u8) {
         pc    |= pull_stack() << 8;
         pc    += 1;
 
-        case 0x4C; // JMP abs
+        case 0x4C; // JMP
         clock += 3;
-        pc     = read_word(pc + 1);
+        pc     = absolute();
 
-        case 0x6C; // JMP ind
+        case 0x6C; // JMP
         clock += 5;
-        pc     = read_word(read_word(pc + 1));
-        // @TODO: if first read is the last byte of a page boundary
-        //        then the second byte should wrap within the page
+        pc     = indirect();
 
-        case 0x24; // BIT zp
-        value   := read_byte(read_byte(pc + 1));
+        case 0x24; // BIT
+        value   := read_byte(zero_page());
         zero     = (value & acc) == 0;
         negative = value & 0b_1000_0000 != 0;
         overflow = value & 0b_0100_0000 != 0;
         clock   += 3;
         pc      += 2;
 
-        case 0x2C; // BIT abs
-        value   := read_byte(read_word(pc + 1));
+        case 0x2C; // BIT
+        value   := read_byte(absolute());
         zero     = (value & acc) == 0;
         negative = value & 0b_1000_0000 != 0;
         overflow = value & 0b_0100_0000 != 0;
@@ -224,223 +222,199 @@ tick :: (opcode: u8) {
         clock += 3;
         pc    += 1;
 
-        //
-        // LDA
-        //
-
         case 0xA1; // LDA izx
-        value := read_byte(read_word(read_byte(pc + 1) + x));
+        value := read_byte(indirect_zero_page_x());
         set_negative_and_zero_flags(value);
         acc    = value;
         clock += 6;
         pc    += 2;
 
-        case 0xA5; // LDA zp
-        value := read_byte(read_byte(pc + 1));
+        case 0xA5; // LDA
+        value := read_byte(zero_page());
         set_negative_and_zero_flags(value);
         acc    = value;
         clock += 3;
         pc    += 2;
 
-        case 0xA9; // LDA imm
-        value := read_byte(pc + 1);
+        case 0xA9; // LDA
+        value := immediate();
         set_negative_and_zero_flags(value);
         acc    = value;
         clock += 2;
         pc    += 2;
 
-        case 0xAD; // LDA abs
-        value := read_byte(read_word(pc + 1));
+        case 0xAD; // LDA
+        value := read_byte(absolute());
         set_negative_and_zero_flags(value);
         acc    = value;
         clock += 4;
         pc    += 3;
 
-        case 0xB1; // LDA izy
-        addr  := read_word(read_byte(pc + 1));
-        value := read_byte(addr + y);
+        case 0xB1; // LDA
+        address, extra_cycle := indirect_zero_page_y();
+        value := read_byte(address);
         set_negative_and_zero_flags(value);
         acc    = value;
-        clock += ifx (addr & 0xFF00) != ((addr + y) & 0xFF00) then 6 else 5;
+        clock += 5 + extra_cycle;
         pc    += 2;
 
-        case 0xB5; // LDA zpx
-        value := read_byte(read_byte(pc + 1) + x);
+        case 0xB5; // LDA
+        value := read_byte(zero_page_x());
         set_negative_and_zero_flags(value);
         acc    = value;
         clock += 4;
         pc    += 2;
 
-        case 0xB9; // LDA aby
-        addr  := read_word(pc + 1);
-        value := read_byte(addr + y);
+        case 0xB9; // LDA
+        address, extra_cycle := absolute_y();
+        value := read_byte(address);
         set_negative_and_zero_flags(value);
         acc    = value;
-        clock += ifx (addr & 0xFF00) != ((addr + y) & 0xFF00) then 5 else 4;
+        clock += 4 + extra_cycle;
         pc    += 3;
         
-        case 0xBD; // LDA abx
-        addr  := read_word(pc + 1);
-        value := read_byte(addr + x);
+        case 0xBD; // LDA
+        address, extra_cycle := absolute_x();
+        value := read_byte(address);
         set_negative_and_zero_flags(value);
         acc    = value;
-        clock += ifx (addr & 0xFF00) != ((addr + x) & 0xFF00) then 5 else 4;
+        clock += 4 + extra_cycle;
         pc    += 3;
 
-        //
-        // LDX
-        //
-
-        case 0xA2; // LDX imm
-        value := read_byte(pc + 1);
+        case 0xA2; // LDX
+        value := immediate();
         set_negative_and_zero_flags(value);
         x      = value;
         clock += 2;
         pc    += 2;
 
-        case 0xA6; // LDX zp
-        value := read_byte(read_byte(pc + 1));
+        case 0xA6; // LDX
+        value := read_byte(zero_page());
         set_negative_and_zero_flags(value);
         x      = value;
         clock += 3;
         pc    += 2;
 
-        case 0xAE; // LDX abs
-        value := read_byte(read_word(pc + 1));
+        case 0xAE; // LDX
+        value := read_byte(absolute());
         set_negative_and_zero_flags(value);
         x      = value;
         clock += 4;
         pc    += 3;
 
-        case 0xB6; // LDX zpy
-        value := read_byte(read_byte(pc + 1) + y);
+        case 0xB6; // LDX
+        value := read_byte(zero_page_y());
         set_negative_and_zero_flags(value);
         x      = value;
         clock += 4;
         pc    += 2;
 
-        case 0xBE; // LDX aby
-        addr  := read_word(pc + 1);
-        value := read_byte(addr + y);
+        case 0xBE; // LDX
+        address, extra_cycle := absolute_y();
+        value := read_byte(address);
         set_negative_and_zero_flags(value);
         x      = value;
-        clock += ifx (addr & 0xFF00) != ((addr + y) & 0xFF00) then 5 else 4;
+        clock += 4 + extra_cycle;
         pc    += 3;
         
-        //
-        // LDY
-        //
-
-        case 0xA0; // LDY imm
-        value := read_byte(pc + 1);
+        case 0xA0; // LDY
+        value := immediate();
         set_negative_and_zero_flags(value);
         y      = value;
         clock += 2;
         pc    += 2;
 
-        case 0xA4; // LDY zp
-        value := read_byte(read_byte(pc + 1));
+        case 0xA4; // LDY
+        value := read_byte(zero_page());
         set_negative_and_zero_flags(value);
         y      = value;
         clock += 3;
         pc    += 2;
 
-        case 0xAC; // LDY abs
-        value := read_byte(read_word(pc + 1));
+        case 0xAC; // LDY
+        value := read_byte(absolute());
         set_negative_and_zero_flags(value);
         y      = value;
         clock += 4;
         pc    += 3;
 
-        case 0xB4; // LDY zpx
-        value := read_byte(read_byte(pc + 1) + x);
+        case 0xB4; // LDY
+        value := read_byte(zero_page_x());
         set_negative_and_zero_flags(value);
         y      = value;
         clock += 4;
         pc    += 2;
 
-        case 0xBC; // LDY abx
-        addr  := read_word(pc + 1);
-        value := read_byte(addr + x);
+        case 0xBC; // LDY
+        address, extra_cycle := absolute_x();
+        value := read_byte(address);
         set_negative_and_zero_flags(value);
         y      = value;
-        clock += ifx (addr & 0xFF00) != ((addr + x) & 0xFF00) then 5 else 4;
+        clock += 4 + extra_cycle;
         pc    += 3;
 
-        //
-        // STA
-        //
-
-        case 0x81; // STA izx
-        write_byte(read_word(read_byte(pc + 1) + x), acc);
+        case 0x81; // STA
+        write_byte(indirect_zero_page_x(), acc);
         clock += 6;
         pc    += 2;
 
-        case 0x85; // STA zp
-        write_byte(read_byte(pc + 1), acc);
+        case 0x85; // STA
+        write_byte(zero_page(), acc);
         clock += 3;
         pc    += 2;
 
-        case 0x8D; // STA abs
-        write_byte(read_word(pc + 1), acc);
+        case 0x8D; // STA
+        write_byte(absolute(), acc);
         clock += 4;
         pc    += 3;
         
-        case 0x91; // STA izy
-        write_byte(read_word(read_byte(pc + 1)) + y, acc);
+        case 0x91; // STA
+        write_byte(indirect_zero_page_y(), acc);
         clock += 6;
         pc    += 2;
 
-        case 0x95; // STA zpx
-        write_byte(read_byte(pc + 1) + x, acc);
+        case 0x95; // STA
+        write_byte(zero_page_x(), acc);
         clock += 4;
         pc    += 2;
 
-        case 0x99; // STA aby
-        write_byte(read_word(pc + 1) + y, acc);
+        case 0x99; // STA
+        write_byte(absolute_y(), acc);
         clock += 5;
         pc    += 3;
 
-        case 0x9D; // STA abx
-        write_byte(read_word(pc + 1) + x, acc);
+        case 0x9D; // STA
+        write_byte(absolute_x(), acc);
         clock += 5;
         pc    += 3;
 
-        //
-        // STX
-        //
-
-        case 0x86; // STX zp
-        write_byte(read_byte(pc + 1), x);
+        case 0x86; // STX
+        write_byte(zero_page(), x);
         clock += 3;
         pc    += 2;
 
-        case 0x8E; // STX abs
-        write_byte(read_word(pc + 1), x);
+        case 0x8E; // STX
+        write_byte(absolute(), x);
         clock += 4;
         pc    += 3;
 
-        case 0x96; // STX zpy
-        write_byte(read_byte(pc + 1) + y, x);
+        case 0x96; // STX
+        write_byte(zero_page_y(), x);
         clock += 4;
         pc    += 2;
 
-        //
-        // STY
-        //
-
-        case 0x84; // STY zp
-        write_byte(read_byte(pc + 1), y);
+        case 0x84; // STY
+        write_byte(zero_page(), y);
         clock += 3;
         pc    += 2;
 
-        case 0x8C; // STY abs
-        write_byte(read_word(pc + 1), y);
+        case 0x8C; // STY
+        write_byte(absolute(), y);
         clock += 4;
         pc    += 3;
 
-        case 0x94; // STY zpx
-        write_byte(read_byte(pc + 1) + x, y);
+        case 0x94; // STY
+        write_byte(zero_page_x(), y);
         clock += 4;
         pc    += 2;
 
@@ -450,6 +424,54 @@ tick :: (opcode: u8) {
 }
 
 #scope_file
+
+immediate :: inline () -> u8 {
+    return read_byte(cpu.pc + 1);
+}
+
+indirect :: inline () -> u16 {
+    // @TODO: if first read is the last byte of a page boundary
+    //        then the second byte should wrap within the page
+    return read_word(read_word(cpu.pc + 1));
+}
+
+indirect_zero_page_x :: inline () -> u16 {
+    return read_word(read_byte(cpu.pc + 1) + cpu.x);
+}
+
+indirect_zero_page_y :: inline () -> u16, s64 {
+    address := read_word(read_byte(cpu.pc + 1));
+    crossed := (address & 0xFF00) != ((address + cpu.y) & 0xFF00);
+    return address + cpu.y, ifx crossed then 1 else 0;
+}
+
+zero_page :: inline () -> u8 {
+    return read_byte(cpu.pc + 1);
+}
+
+zero_page_x :: inline () -> u8 {
+    return read_byte(cpu.pc + 1) + cpu.x;
+}
+
+zero_page_y :: inline () -> u8 {
+    return read_byte(cpu.pc + 1) + cpu.y;
+}
+
+absolute :: inline () -> u16 {
+    return read_word(cpu.pc + 1);
+}
+
+absolute_x :: inline () -> u16, s64 {
+    address := read_word(cpu.pc + 1);
+    crossed := (address & 0xFF00) != ((address + cpu.x) & 0xFF00);
+    return address + cpu.x, ifx crossed then 1 else 0;
+}
+
+absolute_y :: inline () -> u16, s64 {
+    address := read_word(cpu.pc + 1);
+    crossed := (address & 0xFF00) != ((address + cpu.y) & 0xFF00);
+    return address + cpu.y, ifx crossed then 1 else 0;
+}
 
 branch_relative :: inline (condition: bool) {
     cpu.clock += 2;
