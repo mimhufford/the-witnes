@@ -85,6 +85,52 @@ tick :: (opcode: u8) {
         case 0xEE; INC(6, 3, absolute());
         case 0xFE; INC(7, 3, absolute_x());
 
+        case 0xA9; LDA(2, 2, immediate());
+        case 0xA5; LDA(3, 2, zero_page());
+        case 0xB5; LDA(4, 2, zero_page_x());
+        case 0xA1; LDA(6, 2, indirect_zero_page_x());
+        case 0xB1; LDA(5, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0xAD; LDA(4, 3, absolute());
+        case 0xBD; LDA(4, 3, absolute_x(extra_cycle = true));
+        case 0xB9; LDA(4, 3, absolute_y(extra_cycle = true));
+
+        case 0xA2; LDX(2, 2, immediate());
+        case 0xA6; LDX(3, 2, zero_page());
+        case 0xB6; LDX(4, 2, zero_page_y());
+        case 0xAE; LDX(4, 3, absolute());
+        case 0xBE; LDX(4, 3, absolute_y(extra_cycle = true));
+        
+        case 0xA0; LDY(2, 2, immediate());
+        case 0xA4; LDY(3, 2, zero_page());
+        case 0xB4; LDY(4, 2, zero_page_x());
+        case 0xAC; LDY(4, 3, absolute());
+        case 0xBC; LDY(4, 3, absolute_x(extra_cycle = true));
+
+        case 0x85; STA(3, 2, zero_page());
+        case 0x95; STA(4, 2, zero_page_x());
+        case 0x81; STA(6, 2, indirect_zero_page_x());
+        case 0x91; STA(6, 2, indirect_zero_page_y());
+        case 0x8D; STA(4, 3, absolute());
+        case 0x99; STA(5, 3, absolute_y());
+        case 0x9D; STA(5, 3, absolute_x());
+
+        case 0x86; STX(3, 2, zero_page());
+        case 0x96; STX(4, 2, zero_page_y());
+        case 0x8E; STX(4, 3, absolute());
+
+        case 0x84; STY(3, 2, zero_page());
+        case 0x94; STY(4, 2, zero_page_x());
+        case 0x8C; STY(4, 3, absolute());
+
+        case 0x10; branch_relative(!negative);  // BPL
+        case 0x30; branch_relative( negative);  // BMI
+        case 0x50; branch_relative(!overflow);  // BVC
+        case 0x70; branch_relative( overflow);  // BVS
+        case 0x90; branch_relative(!carry);     // BCC
+        case 0xB0; branch_relative( carry);     // BCS
+        case 0xD0; branch_relative(!zero);      // BNE
+        case 0xE0; branch_relative( zero);      // BEQ
+
         case 0xCA; // DEX
         x     -= 1;
         set_negative_and_zero_flags(x);
@@ -108,30 +154,6 @@ tick :: (opcode: u8) {
         set_negative_and_zero_flags(y);
         clock += 2;
         pc    += 1;
-
-        case 0x10; // BPL
-        branch_relative(!negative);
-
-        case 0x30; // BMI
-        branch_relative(negative);
-
-        case 0x50; // BVC
-        branch_relative(!overflow);
-
-        case 0x70; // BVS
-        branch_relative(overflow);
-
-        case 0x90; // BCC
-        branch_relative(!carry);
-
-        case 0xB0; // BCS
-        branch_relative(carry);
-
-        case 0xD0; // BNE
-        branch_relative(!zero);
-
-        case 0xE0; // BEQ
-        branch_relative(zero);
 
         case 0x00; // BRK
         push_stack(cast(u8)((pc + 1) >> 8));
@@ -167,21 +189,8 @@ tick :: (opcode: u8) {
         clock += 5;
         pc     = indirect();
 
-        case 0x24; // BIT
-        value   := read_byte(zero_page());
-        zero     = (value & acc) == 0;
-        negative = value & 0b_1000_0000 != 0;
-        overflow = value & 0b_0100_0000 != 0;
-        clock   += 3;
-        pc      += 2;
-
-        case 0x2C; // BIT
-        value   := read_byte(absolute());
-        zero     = (value & acc) == 0;
-        negative = value & 0b_1000_0000 != 0;
-        overflow = value & 0b_0100_0000 != 0;
-        clock   += 4;
-        pc      += 3;
+        case 0x24; BIT(3, 2, zero_page());
+        case 0x2C; BIT(4, 3, absolute());
 
         case 0x18; // CLC
         carry = false;
@@ -284,199 +293,7 @@ tick :: (opcode: u8) {
         clock += 3;
         pc    += 1;
 
-        case 0xA1; // LDA
-        value := read_byte(indirect_zero_page_x());
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 6;
-        pc    += 2;
-
-        case 0xA5; // LDA
-        value := read_byte(zero_page());
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 3;
-        pc    += 2;
-
-        case 0xA9; // LDA
-        value := read_byte(immediate());
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 2;
-        pc    += 2;
-
-        case 0xAD; // LDA
-        value := read_byte(absolute());
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 4;
-        pc    += 3;
-
-        case 0xB1; // LDA
-        value := read_byte(indirect_zero_page_y(extra_cycle = true));
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 5;
-        pc    += 2;
-
-        case 0xB5; // LDA
-        value := read_byte(zero_page_x());
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 4;
-        pc    += 2;
-
-        case 0xB9; // LDA
-        value := read_byte(absolute_y(extra_cycle = true));
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 4;
-        pc    += 3;
-        
-        case 0xBD; // LDA
-        value := read_byte(absolute_x(extra_cycle = true));
-        set_negative_and_zero_flags(value);
-        acc    = value;
-        clock += 4;
-        pc    += 3;
-
-        case 0xA2; // LDX
-        value := read_byte(immediate());
-        set_negative_and_zero_flags(value);
-        x      = value;
-        clock += 2;
-        pc    += 2;
-
-        case 0xA6; // LDX
-        value := read_byte(zero_page());
-        set_negative_and_zero_flags(value);
-        x      = value;
-        clock += 3;
-        pc    += 2;
-
-        case 0xAE; // LDX
-        value := read_byte(absolute());
-        set_negative_and_zero_flags(value);
-        x      = value;
-        clock += 4;
-        pc    += 3;
-
-        case 0xB6; // LDX
-        value := read_byte(zero_page_y());
-        set_negative_and_zero_flags(value);
-        x      = value;
-        clock += 4;
-        pc    += 2;
-
-        case 0xBE; // LDX
-        value := read_byte(absolute_y(extra_cycle = true));
-        set_negative_and_zero_flags(value);
-        x      = value;
-        clock += 4;
-        pc    += 3;
-        
-        case 0xA0; // LDY
-        value := read_byte(immediate());
-        set_negative_and_zero_flags(value);
-        y      = value;
-        clock += 2;
-        pc    += 2;
-
-        case 0xA4; // LDY
-        value := read_byte(zero_page());
-        set_negative_and_zero_flags(value);
-        y      = value;
-        clock += 3;
-        pc    += 2;
-
-        case 0xAC; // LDY
-        value := read_byte(absolute());
-        set_negative_and_zero_flags(value);
-        y      = value;
-        clock += 4;
-        pc    += 3;
-
-        case 0xB4; // LDY
-        value := read_byte(zero_page_x());
-        set_negative_and_zero_flags(value);
-        y      = value;
-        clock += 4;
-        pc    += 2;
-
-        case 0xBC; // LDY
-        value := read_byte(absolute_x(extra_cycle = true));
-        set_negative_and_zero_flags(value);
-        y      = value;
-        clock += 4;
-        pc    += 3;
-
-        case 0x81; // STA
-        write_byte(indirect_zero_page_x(), acc);
-        clock += 6;
-        pc    += 2;
-
-        case 0x85; // STA
-        write_byte(zero_page(), acc);
-        clock += 3;
-        pc    += 2;
-
-        case 0x8D; // STA
-        write_byte(absolute(), acc);
-        clock += 4;
-        pc    += 3;
-        
-        case 0x91; // STA
-        write_byte(indirect_zero_page_y(), acc);
-        clock += 6;
-        pc    += 2;
-
-        case 0x95; // STA
-        write_byte(zero_page_x(), acc);
-        clock += 4;
-        pc    += 2;
-
-        case 0x99; // STA
-        write_byte(absolute_y(), acc);
-        clock += 5;
-        pc    += 3;
-
-        case 0x9D; // STA
-        write_byte(absolute_x(), acc);
-        clock += 5;
-        pc    += 3;
-
-        case 0x86; // STX
-        write_byte(zero_page(), x);
-        clock += 3;
-        pc    += 2;
-
-        case 0x8E; // STX
-        write_byte(absolute(), x);
-        clock += 4;
-        pc    += 3;
-
-        case 0x96; // STX
-        write_byte(zero_page_y(), x);
-        clock += 4;
-        pc    += 2;
-
-        case 0x84; // STY
-        write_byte(zero_page(), y);
-        clock += 3;
-        pc    += 2;
-
-        case 0x8C; // STY
-        write_byte(absolute(), y);
-        clock += 4;
-        pc    += 3;
-
-        case 0x94; // STY
-        write_byte(zero_page_x(), y);
-        clock += 4;
-        pc    += 2;
-
-        case;
-        assert(false, "Unhandled opcode [%]", opcode);
+        case; assert(false, "Unhandled opcode [%]", opcode);
     }
 }
 
@@ -644,4 +461,52 @@ INC :: (cycles: s64, bytes: u16, location: u16) {
     value     := read_byte(location) + 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
+}
+
+LDA :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.acc    = read_byte(location);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+LDX :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.x      = read_byte(location);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.x);
+}
+
+LDY :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.y      = read_byte(location);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.y);
+}
+
+STA :: (cycles: s64, bytes: u16, location: u16) {
+    write_byte(location, cpu.acc);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+}
+
+STX :: (cycles: s64, bytes: u16, location: u16) {
+    write_byte(location, cpu.x);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+}
+
+STY :: (cycles: s64, bytes: u16, location: u16) {
+    write_byte(location, cpu.y);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+}
+
+BIT :: (cycles: s64, bytes: u16, location: u16) {
+    value       := read_byte(location);
+    cpu.zero     = (value & cpu.acc) == 0;
+    cpu.negative = value & 0b_1000_0000 != 0;
+    cpu.overflow = value & 0b_0100_0000 != 0;
+    cpu.clock   += cycles;
+    cpu.pc      += bytes;
 }
