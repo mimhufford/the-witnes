@@ -21,429 +21,69 @@ tick :: (opcode: u8) {
     using cpu;
 
     if opcode == {
-        case 0x09; // ORA
-        acc   |= immediate();
-        set_negative_and_zero_flags(acc);
-        clock += 2;
-        pc    += 2;
+        case 0x09; ORA(2, 2, immediate());
+        case 0x05; ORA(3, 2, zero_page());
+        case 0x15; ORA(4, 2, zero_page_x());
+        case 0x01; ORA(6, 2, indirect_zero_page_x());
+        case 0x11; ORA(5, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0x0D; ORA(4, 3, absolute());
+        case 0x19; ORA(4, 3, absolute_y(extra_cycle = true));
+        case 0x1D; ORA(4, 3, absolute_x(extra_cycle = true));
 
-        case 0x05; // ORA
-        acc   |= read_byte(zero_page());
-        set_negative_and_zero_flags(acc);
-        clock += 3;
-        pc    += 2;
+        case 0x29; AND(2, 2, immediate());
+        case 0x25; AND(3, 2, zero_page());
+        case 0x35; AND(4, 2, zero_page_x());
+        case 0x21; AND(6, 2, indirect_zero_page_x());
+        case 0x31; AND(5, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0x2D; AND(4, 3, absolute());
+        case 0x3D; AND(4, 3, absolute_x(extra_cycle = true));
+        case 0x39; AND(4, 3, absolute_y(extra_cycle = true));
 
-        case 0x15; // ORA
-        acc   |= read_byte(zero_page_x());
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 2;
+        case 0x49; EOR(2, 2, immediate());
+        case 0x45; EOR(3, 2, zero_page());
+        case 0x55; EOR(4, 2, zero_page_x());
+        case 0x41; EOR(6, 2, indirect_zero_page_x());
+        case 0x51; EOR(5, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0x4D; EOR(4, 3, absolute());
+        case 0x5D; EOR(4, 3, absolute_x(extra_cycle = true));
+        case 0x59; EOR(4, 3, absolute_y(extra_cycle = true));
 
-        case 0x01; // ORA
-        acc   |= read_byte(indirect_zero_page_x());
-        set_negative_and_zero_flags(acc);
-        clock += 6;
-        pc    += 2;
+        case 0x69; ADC(2, 2, immediate());
+        case 0x65; ADC(3, 2, zero_page());
+        case 0x75; ADC(4, 2, zero_page_x());
+        case 0x61; ADC(6, 2, indirect_zero_page_x());
+        case 0x71; ADC(5, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0x6D; ADC(4, 3, absolute());
+        case 0x7D; ADC(4, 3, absolute_x(extra_cycle = true));
+        case 0x79; ADC(4, 3, absolute_y(extra_cycle = true));
 
-        case 0x11; // ORA
-        acc   |= read_byte(indirect_zero_page_y(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 5;
-        pc    += 2;
+        case 0xE9; SBC(2, 2, immediate());
+        case 0xE5; SBC(3, 2, zero_page());
+        case 0xF5; SBC(4, 2, zero_page_x());
+        case 0xE1; SBC(6, 2, indirect_zero_page_x());
+        case 0xF1; SBC(5, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0xED; SBC(4, 3, absolute());
+        case 0xFD; SBC(4, 3, absolute_x(extra_cycle = true));
+        case 0xF9; SBC(4, 3, absolute_y(extra_cycle = true));
 
-        case 0x0D; // ORA
-        acc   |= read_byte(absolute());
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
+        case 0xC9; CMP(2, 2, immediate());
+        case 0xC5; CMP(3, 2, zero_page());
+        case 0xD5; CMP(4, 2, zero_page_x());
+        case 0xC1; CMP(6, 2, indirect_zero_page_x());
+        case 0xD1; CMP(6, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0xCD; CMP(4, 3, absolute());
+        case 0xDD; CMP(4, 3, absolute_x(extra_cycle = true));
+        case 0xD9; CMP(4, 3, absolute_y(extra_cycle = true));
 
-        case 0x1D; // ORA
-        acc   |= read_byte(absolute_x(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
+        case 0xC6; DEC(5, 2, zero_page());
+        case 0xD6; DEC(6, 2, zero_page_x());
+        case 0xCE; DEC(6, 3, absolute());
+        case 0xDE; DEC(7, 3, absolute_x());
 
-        case 0x19; // ORA
-        acc   |= read_byte(absolute_y(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x29; // AND
-        acc   &= immediate();
-        set_negative_and_zero_flags(acc);
-        clock += 2;
-        pc    += 2;
-
-        case 0x25; // AND
-        acc   &= read_byte(zero_page());
-        set_negative_and_zero_flags(acc);
-        clock += 3;
-        pc    += 2;
-
-        case 0x35; // AND
-        acc   &= read_byte(zero_page_x());
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 2;
-
-        case 0x21; // AND
-        acc   &= read_byte(indirect_zero_page_x());
-        set_negative_and_zero_flags(acc);
-        clock += 6;
-        pc    += 2;
-
-        case 0x31; // AND
-        acc   &= read_byte(indirect_zero_page_y(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 5;
-        pc    += 2;
-
-        case 0x2D; // AND
-        acc   &= read_byte(absolute());
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x3D; // AND
-        acc   &= read_byte(absolute_x(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x39; // AND
-        acc   &= read_byte(absolute_y(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x49; // EOR
-        acc   ^= immediate();
-        set_negative_and_zero_flags(acc);
-        clock += 2;
-        pc    += 2;
-
-        case 0x45; // EOR
-        acc   ^= read_byte(zero_page());
-        set_negative_and_zero_flags(acc);
-        clock += 3;
-        pc    += 2;
-
-        case 0x55; // EOR
-        acc   ^= read_byte(zero_page_x());
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 2;
-
-        case 0x41; // EOR
-        acc   ^= read_byte(indirect_zero_page_x());
-        set_negative_and_zero_flags(acc);
-        clock += 6;
-        pc    += 2;
-
-        case 0x51; // EOR
-        acc   ^= read_byte(indirect_zero_page_y(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 5;
-        pc    += 2;
-
-        case 0x4D; // EOR
-        acc   ^= read_byte(absolute());
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x5D; // EOR
-        acc   ^= read_byte(absolute_x(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x59; // EOR
-        acc   ^= read_byte(absolute_y(extra_cycle = true));
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x69; // ADC
-        value := immediate();
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 2;
-        pc    += 2;
-
-        case 0x65; // ADC
-        value := read_byte(zero_page());
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 3;
-        pc    += 2;
-
-        case 0x75; // ADC
-        value := read_byte(zero_page_x());
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 2;
-
-        case 0x61; // ADC
-        value := read_byte(indirect_zero_page_x());
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 6;
-        pc    += 2;
-
-        case 0x71; // ADC
-        value := read_byte(indirect_zero_page_y(extra_cycle = true));
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 5;
-        pc    += 2;
-
-        case 0x6D; // ADC
-        value := read_byte(absolute());
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x7D; // ADC
-        value := read_byte(absolute_x(extra_cycle = true));
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0x79; // ADC
-        value := read_byte(absolute_y(extra_cycle = true));
-        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
-        carry = sum & 0x0100 != 0;
-        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0xE9; // SBC
-        value := immediate();
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 2;
-        pc    += 2;
-
-        case 0xE5; // SBC
-        value := read_byte(zero_page());
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 3;
-        pc    += 2;
-
-        case 0xF5; // SBC
-        value := read_byte(zero_page_x());
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 2;
-
-        case 0xE1; // SBC
-        value := read_byte(indirect_zero_page_x());
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 6;
-        pc    += 2;
-
-        case 0xF1; // SBC
-        value := read_byte(indirect_zero_page_y(extra_cycle = true));
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 5;
-        pc    += 2;
-
-        case 0xED; // SBC
-        value := read_byte(absolute());
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0xFD; // SBC
-        value := read_byte(absolute_x(extra_cycle = true));
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0xF9; // SBC
-        value := read_byte(absolute_y(extra_cycle = true));
-        sum   := cast(u16)acc - cast(u16)value - cast(u16)!carry;
-        carry = sum & 0x0100 == 0;
-        overflow = (acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-        acc   = cast(u8)sum;
-        set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 3;
-
-        case 0xC9; // CMP
-        value := immediate();
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 2;
-        pc    += 2;
-
-        case 0xC5; // CMP
-        value := read_byte(zero_page());
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 3;
-        pc    += 2;
-
-        case 0xD5; // CMP
-        value := read_byte(zero_page_x());
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 4;
-        pc    += 2;
-
-        case 0xC1; // CMP
-        value := read_byte(indirect_zero_page_x());
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 6;
-        pc    += 2;
-
-        case 0xD1; // CMP
-        value := read_byte(indirect_zero_page_y(extra_cycle = true));
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 6;
-        pc    += 2;
-
-        case 0xCD; // CMP
-        value := read_byte(absolute());
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 4;
-        pc    += 3;
-
-        case 0xDD; // CMP
-        value := read_byte(absolute_x(extra_cycle = true));
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 4;
-        pc    += 3;
-
-        case 0xD9; // CMP
-        value := read_byte(absolute_y(extra_cycle = true));
-        carry = acc >= value;
-        set_negative_and_zero_flags(acc - value);
-        clock += 4;
-        pc    += 3;
-
-        case 0xC6; // DEC
-        addr  := zero_page();
-        val   := read_byte(addr) - 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 5;
-        pc    += 2;
-
-        case 0xD6; // DEC
-        addr  := zero_page_x();
-        val   := read_byte(addr) - 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 6;
-        pc    += 2;
-
-        case 0xCE; // DEC
-        addr  := absolute();
-        val   := read_byte(addr) - 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 6;
-        pc    += 3;
-
-        case 0xDE; // DEC
-        addr  := absolute_x();
-        val   := read_byte(addr) - 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 7;
-        pc    += 3;
-
-        case 0xE6; // INC
-        addr  := zero_page();
-        val   := read_byte(addr) + 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 5;
-        pc    += 2;
-
-        case 0xF6; // INC
-        addr  := zero_page_x();
-        val   := read_byte(addr) + 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 6;
-        pc    += 2;
-
-        case 0xEE; // INC
-        addr  := absolute();
-        val   := read_byte(addr) + 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 6;
-        pc    += 3;
-
-        case 0xFE; // INC
-        addr  := absolute_x();
-        val   := read_byte(addr) + 1;
-        write_byte(addr, val);
-        set_negative_and_zero_flags(val);
-        clock += 7;
-        pc    += 3;
+        case 0xE6; INC(5, 2, zero_page());
+        case 0xF6; INC(6, 2, zero_page_x());
+        case 0xEE; INC(6, 3, absolute());
+        case 0xFE; INC(7, 3, absolute_x());
 
         case 0xCA; // DEX
         x     -= 1;
@@ -644,7 +284,7 @@ tick :: (opcode: u8) {
         clock += 3;
         pc    += 1;
 
-        case 0xA1; // LDA izx
+        case 0xA1; // LDA
         value := read_byte(indirect_zero_page_x());
         set_negative_and_zero_flags(value);
         acc    = value;
@@ -659,7 +299,7 @@ tick :: (opcode: u8) {
         pc    += 2;
 
         case 0xA9; // LDA
-        value := immediate();
+        value := read_byte(immediate());
         set_negative_and_zero_flags(value);
         acc    = value;
         clock += 2;
@@ -701,7 +341,7 @@ tick :: (opcode: u8) {
         pc    += 3;
 
         case 0xA2; // LDX
-        value := immediate();
+        value := read_byte(immediate());
         set_negative_and_zero_flags(value);
         x      = value;
         clock += 2;
@@ -736,7 +376,7 @@ tick :: (opcode: u8) {
         pc    += 3;
         
         case 0xA0; // LDY
-        value := immediate();
+        value := read_byte(immediate());
         set_negative_and_zero_flags(value);
         y      = value;
         clock += 2;
@@ -842,8 +482,8 @@ tick :: (opcode: u8) {
 
 #scope_file
 
-immediate :: inline () -> u8 {
-    return read_byte(cpu.pc + 1);
+immediate :: inline () -> u16 {
+    return cpu.pc + 1;
 }
 
 indirect :: inline () -> u16 {
@@ -862,15 +502,15 @@ indirect_zero_page_y :: inline (extra_cycle := false) -> u16 {
     return addr + cpu.y;
 }
 
-zero_page :: inline () -> u8 {
+zero_page :: inline () -> u16 {
     return read_byte(cpu.pc + 1);
 }
 
-zero_page_x :: inline () -> u8 {
+zero_page_x :: inline () -> u16 {
     return read_byte(cpu.pc + 1) + cpu.x;
 }
 
-zero_page_y :: inline () -> u8 {
+zero_page_y :: inline () -> u16 {
     return read_byte(cpu.pc + 1) + cpu.y;
 }
 
@@ -937,4 +577,71 @@ push_flags :: inline (bit_5: u8, bit_4: u8) {
              (cast(u8)cpu.zero)              << 1 |
              (cast(u8)cpu.carry)             << 0;
     push_stack(flags);
+}
+
+ORA :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.acc   |= read_byte(location);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+AND :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.acc   &= read_byte(location);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+EOR :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.acc   ^= read_byte(location);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+ADC :: (cycles: s64, bytes: u16, location: u16) {
+    value   : u16 = read_byte(location);
+    sum     : u16 = cast(u16)cpu.acc + value + cast(u16)cpu.carry;
+    cpu.carry     = sum & 0x0100 != 0;
+    cpu.overflow  = (cpu.acc ^ sum) & (value ^ sum) & 0x80 != 0;
+    cpu.acc       = cast(u8)sum;
+    cpu.clock    += cycles;
+    cpu.pc       += bytes;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+SBC :: (cycles: s64, bytes: u16, location: u16) {
+    value   : u16 = read_byte(location);
+    sum     : u16 = cast(u16)cpu.acc - value - cast(u16)!cpu.carry;
+    cpu.carry     = sum & 0x0100 == 0;
+    cpu.overflow  = (cpu.acc ^ sum) & (~value ^ sum) & 0x80 != 0;
+    cpu.acc       = cast(u8)sum;
+    cpu.clock    += cycles;
+    cpu.pc       += bytes;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+CMP :: (cycles: s64, bytes: u16, location: u16) {
+    value     := read_byte(location);
+    cpu.carry  = cpu.acc >= value;
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.acc - value);
+}
+
+DEC :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    value     := read_byte(location) - 1;
+    write_byte(location, value);
+    set_negative_and_zero_flags(value);
+}
+
+INC :: (cycles: s64, bytes: u16, location: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    value     := read_byte(location) + 1;
+    write_byte(location, value);
+    set_negative_and_zero_flags(value);
 }
