@@ -66,14 +66,22 @@ tick :: (opcode: u8) {
         case 0xFD; SBC(4, 3, absolute_x(extra_cycle = true));
         case 0xF9; SBC(4, 3, absolute_y(extra_cycle = true));
 
-        case 0xC9; CMP(2, 2, immediate());
-        case 0xC5; CMP(3, 2, zero_page());
-        case 0xD5; CMP(4, 2, zero_page_x());
-        case 0xC1; CMP(6, 2, indirect_zero_page_x());
-        case 0xD1; CMP(6, 2, indirect_zero_page_y(extra_cycle = true));
-        case 0xCD; CMP(4, 3, absolute());
-        case 0xDD; CMP(4, 3, absolute_x(extra_cycle = true));
-        case 0xD9; CMP(4, 3, absolute_y(extra_cycle = true));
+        case 0xC9; compare(2, 2, acc, immediate());                               // CMP
+        case 0xC5; compare(3, 2, acc, zero_page());                               // CMP
+        case 0xD5; compare(4, 2, acc, zero_page_x());                             // CMP
+        case 0xC1; compare(6, 2, acc, indirect_zero_page_x());                    // CMP
+        case 0xD1; compare(6, 2, acc, indirect_zero_page_y(extra_cycle = true));  // CMP
+        case 0xCD; compare(4, 3, acc, absolute());                                // CMP
+        case 0xDD; compare(4, 3, acc, absolute_x(extra_cycle = true));            // CMP
+        case 0xD9; compare(4, 3, acc, absolute_y(extra_cycle = true));            // CMP
+
+        case 0xE0; compare(2, 2, x, immediate()); // CPX
+        case 0xE4; compare(3, 2, x, zero_page()); // CPX
+        case 0xEC; compare(4, 3, x, absolute());  // CPX
+
+        case 0xC0; compare(2, 2, y, immediate()); // CPY
+        case 0xC4; compare(3, 2, y, zero_page()); // CPY
+        case 0xCC; compare(4, 3, y, absolute());  // CPY
 
         case 0xC6; DEC(5, 2, zero_page());
         case 0xD6; DEC(6, 2, zero_page_x());
@@ -358,14 +366,6 @@ SBC :: inline (cycles: s64, bytes: u16, location: u16) {
     set_negative_and_zero_flags(cpu.acc);
 }
 
-CMP :: inline (cycles: s64, bytes: u16, location: u16) {
-    value     := read_byte(location);
-    cpu.carry  = cpu.acc >= value;
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    set_negative_and_zero_flags(cpu.acc - value);
-}
-
 DEC :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.clock += cycles;
     cpu.pc    += bytes;
@@ -465,4 +465,12 @@ transfer :: inline (src: u8, dest: *u8, set_flags: bool) {
     cpu.pc    += 1;
     <<dest     = src;
     if set_flags then set_negative_and_zero_flags(src);
+}
+
+compare :: inline (cycles: s64, bytes: u16, src: u8, location: u16) {
+    value     := read_byte(location);
+    cpu.carry  = src >= value;
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(src - value);
 }
