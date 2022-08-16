@@ -150,6 +150,18 @@ tick :: (opcode: u8) {
         case 0x0E; ASL(6, 3, absolute());
         case 0x1E; ASL(7, 3, absolute_x());
 
+        case 0x2A; ROL(2, 1);
+        case 0x26; ROL(5, 2, zero_page());
+        case 0x36; ROL(6, 2, zero_page_x());
+        case 0x2E; ROL(6, 3, absolute());
+        case 0x3E; ROL(7, 3, absolute_x());
+
+        case 0x6A; ROR(2, 1);
+        case 0x66; ROR(5, 2, zero_page());
+        case 0x76; ROR(6, 2, zero_page_x());
+        case 0x6E; ROR(6, 3, absolute());
+        case 0x7E; ROR(7, 3, absolute_x());
+
         case 0x4A; LSR(2, 1);
         case 0x46; LSR(5, 2, zero_page());
         case 0x56; LSR(6, 2, zero_page_x());
@@ -484,6 +496,50 @@ LSR :: inline (cycles: s64, bytes: u16, location: u16) {
     value     := read_byte(location);
     cpu.carry  = value & 0x1 != 0;
     value    >>= 1;
+    write_byte(location, value);
+    set_negative_and_zero_flags(value);
+}
+
+ROL :: inline (cycles: s64, bytes: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    pre_carry := cpu.carry;
+    cpu.carry  = cpu.acc & 0x80 != 0;
+    cpu.acc  <<= 1;
+    cpu.acc   |= cast(u8)pre_carry;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+ROL :: inline (cycles: s64, bytes: u16, location: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    pre_carry := cpu.carry;
+    value     := read_byte(location);
+    cpu.carry  = value & 0x80 != 0;
+    value    <<= 1;
+    value     |= cast(u8)pre_carry;
+    write_byte(location, value);
+    set_negative_and_zero_flags(value);
+}
+
+ROR :: inline (cycles: s64, bytes: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    pre_carry := cpu.carry;
+    cpu.carry  = cpu.acc & 0x1 != 0;
+    cpu.acc  >>= 1;
+    cpu.acc   |= (cast(u8)pre_carry) << 7;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+ROR :: inline (cycles: s64, bytes: u16, location: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    pre_carry := cpu.carry;
+    value     := read_byte(location);
+    cpu.carry  = value & 0x1 != 0;
+    value    >>= 1;
+    value     |= (cast(u8)pre_carry) << 7;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
 }
