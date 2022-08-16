@@ -165,6 +165,86 @@ tick :: (opcode: u8) {
         clock += 4;
         pc    += 3;
 
+        case 0x69; // ADC
+        value := immediate();
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 2;
+        pc    += 2;
+
+        case 0x65; // ADC
+        value := read_byte(zero_page());
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 3;
+        pc    += 2;
+
+        case 0x75; // ADC
+        value := read_byte(zero_page_x());
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 2;
+
+        case 0x61; // ADC
+        value := read_byte(indirect_zero_page_x());
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 6;
+        pc    += 2;
+
+        case 0x71; // ADC
+        value := read_byte(indirect_zero_page_y(extra_cycle = true));
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 5;
+        pc    += 2;
+
+        case 0x6D; // ADC
+        value := read_byte(absolute());
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 3;
+
+        case 0x7D; // ADC
+        value := read_byte(absolute_x(extra_cycle = true));
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 3;
+
+        case 0x79; // ADC
+        value := read_byte(absolute_y(extra_cycle = true));
+        sum   := cast(u16)acc + cast(u16)value + cast(u16)carry;
+        carry = sum & 0x0100 != 0;
+        overflow = (acc ^ sum) & (value ^ sum) & 0x80 != 0;
+        acc   = cast(u8)sum;
+        set_negative_and_zero_flags(acc);
+        clock += 4;
+        pc    += 3;
+
         case 0xC9; // CMP
         value := immediate();
         carry = acc >= value;
