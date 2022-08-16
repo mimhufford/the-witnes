@@ -165,6 +165,62 @@ tick :: (opcode: u8) {
         clock += 4;
         pc    += 3;
 
+        case 0xC9; // CMP
+        value := immediate();
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 2;
+        pc    += 2;
+
+        case 0xC5; // CMP
+        value := read_byte(zero_page());
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 3;
+        pc    += 2;
+
+        case 0xD5; // CMP
+        value := read_byte(zero_page_x());
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 4;
+        pc    += 2;
+
+        case 0xC1; // CMP
+        value := read_byte(indirect_zero_page_x());
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 6;
+        pc    += 2;
+
+        case 0xD1; // CMP
+        value := read_byte(indirect_zero_page_y(extra_cycle = true));
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 6;
+        pc    += 2;
+
+        case 0xCD; // CMP
+        value := read_byte(absolute());
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 4;
+        pc    += 3;
+
+        case 0xDD; // CMP
+        value := read_byte(absolute_x(extra_cycle = true));
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 4;
+        pc    += 3;
+
+        case 0xD9; // CMP
+        value := read_byte(absolute_y(extra_cycle = true));
+        carry = acc >= value;
+        set_negative_and_zero_flags(acc - value);
+        clock += 4;
+        pc    += 3;
+
         case 0xC6; // DEC
         addr  := zero_page();
         val   := read_byte(addr) - 1;
