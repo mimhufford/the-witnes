@@ -131,29 +131,33 @@ tick :: (opcode: u8) {
         case 0xD0; branch_relative(!zero);      // BNE
         case 0xE0; branch_relative( zero);      // BEQ
 
-        case 0xCA; // DEX
-        x     -= 1;
-        set_negative_and_zero_flags(x);
-        clock += 2;
-        pc    += 1;
+        case 0xE8; increment(*x);  // INX
+        case 0xC8; increment(*y);  // INY
+        case 0xCA; decrement(*x);  // DEX
+        case 0x88; decrement(*y);  // DEY
 
-        case 0x88; // DEY
-        y     -= 1;
-        set_negative_and_zero_flags(y);
-        clock += 2;
-        pc    += 1;
+        case 0x4C; JMP(3, absolute());
+        case 0x6C; JMP(5, indirect());
 
-        case 0xE8; // INX
-        x     += 1;
-        set_negative_and_zero_flags(x);
-        clock += 2;
-        pc    += 1;
+        case 0x24; BIT(3, 2, zero_page());
+        case 0x2C; BIT(4, 3, absolute());
 
-        case 0xC8; // INY
-        y     += 1;
-        set_negative_and_zero_flags(y);
-        clock += 2;
-        pc    += 1;
+        case 0x18; set_flag(*carry,             false);  // CLC
+        case 0x38; set_flag(*carry,             true);   // SEC
+        case 0xD8; set_flag(*decimal,           false);  // CLD
+        case 0xF8; set_flag(*decimal,           true);   // SED
+        case 0x58; set_flag(*interrupt_disable, false);  // CLI
+        case 0x78; set_flag(*interrupt_disable, true);   // SEI
+        case 0xB8; set_flag(*overflow,          false);  // CLV
+
+        case 0xEA; NOP();
+
+        case 0xAA; transfer(acc, *x, set_flags = true);   // TAX
+        case 0x8A; transfer(x, *acc, set_flags = true);   // TXA
+        case 0xA8; transfer(acc, *y, set_flags = true);   // TAY
+        case 0x98; transfer(y, *acc, set_flags = true);   // TYA
+        case 0xBA; transfer(sp, *x,  set_flags = true);   // TSX
+        case 0x9A; transfer(x, *sp,  set_flags = false);  // TXS
 
         case 0x00; // BRK
         push_stack(cast(u8)((pc + 1) >> 8));
@@ -179,91 +183,6 @@ tick :: (opcode: u8) {
         clock += 6;
         pc     = pull_stack() << 0;
         pc    |= pull_stack() << 8;
-        pc    += 1;
-
-        case 0x4C; // JMP
-        clock += 3;
-        pc     = absolute();
-
-        case 0x6C; // JMP
-        clock += 5;
-        pc     = indirect();
-
-        case 0x24; BIT(3, 2, zero_page());
-        case 0x2C; BIT(4, 3, absolute());
-
-        case 0x18; // CLC
-        carry = false;
-        clock += 2;
-        pc    += 1;
-
-        case 0x38; // SEC
-        carry = true;
-        clock += 2;
-        pc    += 1;
-
-        case 0xD8; // CLD
-        decimal = false;
-        clock += 2;
-        pc    += 1;
-
-        case 0xF8; // SED
-        decimal = true;
-        clock += 2;
-        pc    += 1;
-
-        case 0x58; // CLI
-        interrupt_disable = false;
-        clock += 2;
-        pc    += 1;
-
-        case 0x78; // SEI
-        interrupt_disable = true;
-        clock += 2;
-        pc    += 1;
-
-        case 0xB8; // CLV
-        overflow = false;
-        clock += 2;
-        pc    += 1;
-
-        case 0xEA; // NOP
-        clock += 2;
-        pc    += 1;
-
-        case 0xAA; // TAX
-        x = acc;
-        set_negative_and_zero_flags(acc);
-        clock += 2;
-        pc    += 1;
-
-        case 0x8A; // TXA
-        acc = x;
-        set_negative_and_zero_flags(x);
-        clock += 2;
-        pc    += 1;
-
-        case 0xA8; // TAY
-        y = acc;
-        set_negative_and_zero_flags(acc);
-        clock += 2;
-        pc    += 1;
-
-        case 0x98; // TYA
-        acc = y;
-        set_negative_and_zero_flags(y);
-        clock += 2;
-        pc    += 1;
-
-        case 0xBA; // TSX
-        x = sp;
-        set_negative_and_zero_flags(sp);
-        clock += 2;
-        pc    += 1;
-
-        case 0x9A; // TXS
-        sp = x;
-        clock += 2;
         pc    += 1;
 
         case 0x68; // PLA
@@ -396,28 +315,28 @@ push_flags :: inline (bit_5: u8, bit_4: u8) {
     push_stack(flags);
 }
 
-ORA :: (cycles: s64, bytes: u16, location: u16) {
+ORA :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.acc   |= read_byte(location);
     cpu.clock += cycles;
     cpu.pc    += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
-AND :: (cycles: s64, bytes: u16, location: u16) {
+AND :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.acc   &= read_byte(location);
     cpu.clock += cycles;
     cpu.pc    += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
-EOR :: (cycles: s64, bytes: u16, location: u16) {
+EOR :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.acc   ^= read_byte(location);
     cpu.clock += cycles;
     cpu.pc    += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
-ADC :: (cycles: s64, bytes: u16, location: u16) {
+ADC :: inline (cycles: s64, bytes: u16, location: u16) {
     value   : u16 = read_byte(location);
     sum     : u16 = cast(u16)cpu.acc + value + cast(u16)cpu.carry;
     cpu.carry     = sum & 0x0100 != 0;
@@ -428,7 +347,7 @@ ADC :: (cycles: s64, bytes: u16, location: u16) {
     set_negative_and_zero_flags(cpu.acc);
 }
 
-SBC :: (cycles: s64, bytes: u16, location: u16) {
+SBC :: inline (cycles: s64, bytes: u16, location: u16) {
     value   : u16 = read_byte(location);
     sum     : u16 = cast(u16)cpu.acc - value - cast(u16)!cpu.carry;
     cpu.carry     = sum & 0x0100 == 0;
@@ -439,7 +358,7 @@ SBC :: (cycles: s64, bytes: u16, location: u16) {
     set_negative_and_zero_flags(cpu.acc);
 }
 
-CMP :: (cycles: s64, bytes: u16, location: u16) {
+CMP :: inline (cycles: s64, bytes: u16, location: u16) {
     value     := read_byte(location);
     cpu.carry  = cpu.acc >= value;
     cpu.clock += cycles;
@@ -447,7 +366,7 @@ CMP :: (cycles: s64, bytes: u16, location: u16) {
     set_negative_and_zero_flags(cpu.acc - value);
 }
 
-DEC :: (cycles: s64, bytes: u16, location: u16) {
+DEC :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.clock += cycles;
     cpu.pc    += bytes;
     value     := read_byte(location) - 1;
@@ -455,7 +374,7 @@ DEC :: (cycles: s64, bytes: u16, location: u16) {
     set_negative_and_zero_flags(value);
 }
 
-INC :: (cycles: s64, bytes: u16, location: u16) {
+INC :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.clock += cycles;
     cpu.pc    += bytes;
     value     := read_byte(location) + 1;
@@ -463,50 +382,87 @@ INC :: (cycles: s64, bytes: u16, location: u16) {
     set_negative_and_zero_flags(value);
 }
 
-LDA :: (cycles: s64, bytes: u16, location: u16) {
+LDA :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.acc    = read_byte(location);
     cpu.clock += cycles;
     cpu.pc    += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
-LDX :: (cycles: s64, bytes: u16, location: u16) {
+LDX :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.x      = read_byte(location);
     cpu.clock += cycles;
     cpu.pc    += bytes;
     set_negative_and_zero_flags(cpu.x);
 }
 
-LDY :: (cycles: s64, bytes: u16, location: u16) {
+LDY :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.y      = read_byte(location);
     cpu.clock += cycles;
     cpu.pc    += bytes;
     set_negative_and_zero_flags(cpu.y);
 }
 
-STA :: (cycles: s64, bytes: u16, location: u16) {
+STA :: inline (cycles: s64, bytes: u16, location: u16) {
     write_byte(location, cpu.acc);
     cpu.clock += cycles;
     cpu.pc    += bytes;
 }
 
-STX :: (cycles: s64, bytes: u16, location: u16) {
+STX :: inline (cycles: s64, bytes: u16, location: u16) {
     write_byte(location, cpu.x);
     cpu.clock += cycles;
     cpu.pc    += bytes;
 }
 
-STY :: (cycles: s64, bytes: u16, location: u16) {
+STY :: inline (cycles: s64, bytes: u16, location: u16) {
     write_byte(location, cpu.y);
     cpu.clock += cycles;
     cpu.pc    += bytes;
 }
 
-BIT :: (cycles: s64, bytes: u16, location: u16) {
+BIT :: inline (cycles: s64, bytes: u16, location: u16) {
     value       := read_byte(location);
     cpu.zero     = (value & cpu.acc) == 0;
     cpu.negative = value & 0b_1000_0000 != 0;
     cpu.overflow = value & 0b_0100_0000 != 0;
     cpu.clock   += cycles;
     cpu.pc      += bytes;
+}
+
+JMP :: inline (cycles: s64, location: u16) {
+    cpu.clock += cycles;
+    cpu.pc     = location;
+}
+
+NOP :: inline () {
+    cpu.clock += 2;
+    cpu.pc    += 1;
+}
+
+decrement :: inline (reg: *u8) {
+    cpu.clock += 2;
+    cpu.pc    += 1;
+    <<reg     -= 1;
+    set_negative_and_zero_flags(<<reg);
+}
+
+increment :: inline (reg: *u8) {
+    cpu.clock += 2;
+    cpu.pc    += 1;
+    <<reg     += 1;
+    set_negative_and_zero_flags(<<reg);
+}
+
+set_flag :: inline (flag: *bool, value: bool) {
+    cpu.clock += 2;
+    cpu.pc    += 1;
+    <<flag     = value;
+}
+
+transfer :: inline (src: u8, dest: *u8, set_flags: bool) {
+    cpu.clock += 2;
+    cpu.pc    += 1;
+    <<dest     = src;
+    if set_flags then set_negative_and_zero_flags(src);
 }
