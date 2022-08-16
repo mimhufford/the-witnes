@@ -137,12 +137,24 @@ tick :: (opcode: u8) {
         case 0x90; branch_relative(!carry);     // BCC
         case 0xB0; branch_relative( carry);     // BCS
         case 0xD0; branch_relative(!zero);      // BNE
-        case 0xE0; branch_relative( zero);      // BEQ
+        case 0xF0; branch_relative( zero);      // BEQ
 
         case 0xE8; increment(*x);  // INX
         case 0xC8; increment(*y);  // INY
         case 0xCA; decrement(*x);  // DEX
         case 0x88; decrement(*y);  // DEY
+
+        case 0x0A; ASL(2, 1);
+        case 0x06; ASL(5, 2, zero_page());
+        case 0x16; ASL(6, 2, zero_page_x());
+        case 0x0E; ASL(6, 3, absolute());
+        case 0x1E; ASL(7, 3, absolute_x());
+
+        case 0x4A; LSR(2, 1);
+        case 0x46; LSR(5, 2, zero_page());
+        case 0x56; LSR(6, 2, zero_page_x());
+        case 0x4E; LSR(6, 3, absolute());
+        case 0x5E; LSR(7, 3, absolute_x());
 
         case 0x4C; JMP(3, absolute());
         case 0x6C; JMP(5, indirect());
@@ -438,6 +450,42 @@ JMP :: inline (cycles: s64, location: u16) {
 NOP :: inline () {
     cpu.clock += 2;
     cpu.pc    += 1;
+}
+
+ASL :: inline (cycles: s64, bytes: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    cpu.carry  = cpu.acc & 0x80 != 0;
+    cpu.acc  <<= 1;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+ASL :: inline (cycles: s64, bytes: u16, location: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    value     := read_byte(location);
+    cpu.carry  = value & 0x80 != 0;
+    value    <<= 1;
+    write_byte(location, value);
+    set_negative_and_zero_flags(value);
+}
+
+LSR :: inline (cycles: s64, bytes: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    cpu.carry  = cpu.acc & 0x1 != 0;
+    cpu.acc  >>= 1;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+LSR :: inline (cycles: s64, bytes: u16, location: u16) {
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    value     := read_byte(location);
+    cpu.carry  = value & 0x1 != 0;
+    value    >>= 1;
+    write_byte(location, value);
+    set_negative_and_zero_flags(value);
 }
 
 decrement :: inline (reg: *u8) {
