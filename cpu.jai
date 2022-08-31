@@ -574,7 +574,7 @@ compare :: inline (cycles: s64, bytes: u16, src: u8, location: u16) {
     value       := read_byte(location);
     cpu.clock   += cycles;
     cpu.pc      += bytes;
-    cpu.negative = src == value;
+    cpu.negative = src != value;
     cpu.carry    = src >= value;
-    cpu.zero     = src != value;
+    cpu.zero     = src == value;
 }
