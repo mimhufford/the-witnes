@@ -55,18 +55,18 @@ read_byte :: (address: u16) -> u8 {
     if address < 0x2000 return ram[address % 0x0800];
     if address < 0x4000 return ppu[address % 0x0008];
     if address < 0x4020 return apu[address % 0x0020];
-    // @TODO: use correct mapper based on current cartridge
     return mapper_read_byte(address);
+    // @TODO: use correct mapper based on current cartridge
 }
 
 write_byte :: (address: u16, value: u8) {
     assert(address >= 0x0000);
     assert(address <= 0xFFFF);
-    if address < 0x2000 ram[address % 0x0800] = value;
-    if address < 0x4000 ppu[address % 0x0008] = value;
-    if address < 0x4020 apu[address % 0x0020] = value;
+    if      address < 0x2000 ram[address % 0x0800] = value;
+    else if address < 0x4000 ppu[address % 0x0008] = value;
+    else if address < 0x4020 apu[address % 0x0020] = value;
+    else mapper_write_byte(address, value);
     // @TODO: use correct mapper based on current cartridge
-    mapper_write_byte(address, value);
 }
 
 // @TODO move into mapper.jai, this is just mapper 0 for now
@@ -78,7 +78,7 @@ mapper_read_byte :: (address: u16) -> u8 {
 
 // @TODO move into mapper.jai, this is just mapper 0 for now
 mapper_write_byte :: (address: u16, value: u8) {
-    // @TODO
+    assert(false);
 }
 
 ram  : [2048]u8;
