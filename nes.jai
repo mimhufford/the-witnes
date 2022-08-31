@@ -27,7 +27,7 @@ main :: () {
                      ((cast(u8)cpu.zero)              << 1) |
                      ((cast(u8)cpu.carry)             << 0);
 
-        print("% % A:% X:% Y:% P:% SP:% PPU: CYC:%\n",
+        print("%  %  A:% X:% Y:% P:% SP:% PPU: CYC:%\n",
                 formatInt(cpu.pc,  base=16, minimum_digits=4),
                 formatInt(op,      base=16, minimum_digits=2),
                 formatInt(cpu.acc, base=16, minimum_digits=2),
