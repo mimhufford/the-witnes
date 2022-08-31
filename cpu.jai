@@ -213,8 +213,7 @@ tick :: (opcode: u8) {
 
         case 0x60; // RTS
         clock += 6;
-        pc     = pull_stack() << 0;
-        pc    |= pull_stack() << 8;
+        pc     = (cast(u16)pull_stack()) | ((cast(u16)pull_stack()) << 8);
         pc    += 1;
 
         case 0x68; // PLA
