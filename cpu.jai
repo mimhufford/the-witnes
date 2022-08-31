@@ -89,6 +89,14 @@ tick :: (opcode: u8) {
         case 0xCE; DEC(6, 3, absolute());
         case 0xDE; DEC(7, 3, absolute_x());
 
+        case 0xC7; DCP(5, 2, zero_page());
+        case 0xD7; DCP(6, 2, zero_page_x());
+        case 0xC3; DCP(8, 2, indirect_zero_page_x());
+        case 0xD3; DCP(8, 2, indirect_zero_page_y());
+        case 0xCF; DCP(6, 3, absolute());
+        case 0xDF; DCP(7, 3, absolute_x());
+        case 0xDB; DCP(7, 3, absolute_y());
+
         case 0xE6; INC(5, 2, zero_page());
         case 0xF6; INC(6, 2, zero_page_x());
         case 0xEE; INC(6, 3, absolute());
@@ -430,6 +438,11 @@ DEC :: inline (cycles: s64, bytes: u16, location: u16) {
     value     := read_byte(location) - 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
+}
+
+DCP :: inline (cycles: s64, bytes: u16, location: u16) {
+    DEC(0, 0, location);
+    compare(cycles, bytes, cpu.acc, location);
 }
 
 INC :: inline (cycles: s64, bytes: u16, location: u16) {
