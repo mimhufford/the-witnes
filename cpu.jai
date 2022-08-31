@@ -123,26 +123,26 @@ tick :: (opcode: u8) {
         case 0xAC; LDY(4, 3, absolute());
         case 0xBC; LDY(4, 3, absolute_x(extra_cycle = true));
 
-        case 0x85; STA(3, 2, zero_page());
-        case 0x95; STA(4, 2, zero_page_x());
-        case 0x81; STA(6, 2, indirect_zero_page_x());
-        case 0x91; STA(6, 2, indirect_zero_page_y());
-        case 0x8D; STA(4, 3, absolute());
-        case 0x99; STA(5, 3, absolute_y());
-        case 0x9D; STA(5, 3, absolute_x());
+        case 0x85; store(3, 2, acc, zero_page());             // STA
+        case 0x95; store(4, 2, acc, zero_page_x());           // STA
+        case 0x81; store(6, 2, acc, indirect_zero_page_x());  // STA
+        case 0x91; store(6, 2, acc, indirect_zero_page_y());  // STA
+        case 0x8D; store(4, 3, acc, absolute());              // STA
+        case 0x99; store(5, 3, acc, absolute_y());            // STA
+        case 0x9D; store(5, 3, acc, absolute_x());            // STA
 
-        case 0x86; STX(3, 2, zero_page());
-        case 0x96; STX(4, 2, zero_page_y());
-        case 0x8E; STX(4, 3, absolute());
+        case 0x86; store(3, 2, x, zero_page());     // STX
+        case 0x96; store(4, 2, x, zero_page_y());   // STX
+        case 0x8E; store(4, 3, x, absolute());      // STX
 
-        case 0x84; STY(3, 2, zero_page());
-        case 0x94; STY(4, 2, zero_page_x());
-        case 0x8C; STY(4, 3, absolute());
+        case 0x84; store(3, 2, y, zero_page());     // STY
+        case 0x94; store(4, 2, y, zero_page_x());   // STY
+        case 0x8C; store(4, 3, y, absolute());      // STY
 
-        case 0x87; SAX(3, 2, zero_page());
-        case 0x97; SAX(4, 2, zero_page_y());
-        case 0x83; SAX(6, 2, indirect_zero_page_x());
-        case 0x8F; SAX(4, 3, absolute());
+        case 0x87; store(3, 2, acc & x, zero_page());             // SAX
+        case 0x97; store(4, 2, acc & x, zero_page_y());           // SAX
+        case 0x83; store(6, 2, acc & x, indirect_zero_page_x());  // SAX
+        case 0x8F; store(4, 3, acc & x, absolute());              // SAX
 
         case 0x10; branch_relative(!negative);  // BPL
         case 0x30; branch_relative( negative);  // BMI
@@ -469,26 +469,8 @@ LDY :: inline (cycles: s64, bytes: u16, location: u16) {
     set_negative_and_zero_flags(cpu.y);
 }
 
-STA :: inline (cycles: s64, bytes: u16, location: u16) {
-    write_byte(location, cpu.acc);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-}
-
-STX :: inline (cycles: s64, bytes: u16, location: u16) {
-    write_byte(location, cpu.x);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-}
-
-STY :: inline (cycles: s64, bytes: u16, location: u16) {
-    write_byte(location, cpu.y);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-}
-
-SAX :: inline (cycles: s64, bytes: u16, location: u16) {
-    write_byte(location, cpu.acc & cpu.x);
+store :: (cycles: s64, bytes: u16, value: u8, location: u16) {
+    write_byte(location, value);
     cpu.clock += cycles;
     cpu.pc    += bytes;
 }
