@@ -253,9 +253,8 @@ immediate :: inline () -> u16 {
 }
 
 indirect :: inline () -> u16 {
-    // @TODO: if first read is the last byte of a page boundary
-    //        then the second byte should wrap within the page
-    return read_word(read_word(cpu.pc + 1));
+    addr := read_word(cpu.pc + 1);
+    return (cast(u16)read_byte((addr & 0xFF00) | ((addr + 1) & 0x00FF))) << 8 | read_byte(addr);
 }
 
 indirect_zero_page_x :: inline () -> u16 {
