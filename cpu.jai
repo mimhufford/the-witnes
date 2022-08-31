@@ -206,8 +206,8 @@ tick :: (opcode: u8) {
         pc    |= pull_stack() << 8;
 
         case 0x20; // JSR
-        push_stack(cast(u8)((pc + 2) >> 8));
-        push_stack(cast(u8)((pc + 2) >> 0));
+        push_stack(cast(u8)(((pc + 2) >> 8) & 0xFF));
+        push_stack(cast(u8)(((pc + 2) >> 0) & 0xFF));
         clock += 6;
         pc     = read_word(pc + 1);
 
