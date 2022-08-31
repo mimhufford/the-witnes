@@ -202,8 +202,7 @@ tick :: (opcode: u8) {
         case 0x40; // RTI
         pull_flags();
         clock += 6;
-        pc     = pull_stack() << 0;
-        pc    |= pull_stack() << 8;
+        pc     = (cast(u16)pull_stack()) | ((cast(u16)pull_stack()) << 8);
 
         case 0x20; // JSR
         push_stack(cast(u8)(((pc + 2) >> 8) & 0xFF));
