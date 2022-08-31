@@ -322,7 +322,7 @@ branch_relative :: inline (condition: bool) {
     cpu.clock += 2;
     if condition {
         addr := cpu.pc;
-        cpu.pc = cast(u16)(cast(s32)(cpu.pc + 2) + cast(s8)read_byte(cpu.pc + 1));
+        cpu.pc = cast,no_check(u16)(cast,no_check(s16)(cpu.pc + 2) + cast,no_check(s8) read_byte(cpu.pc + 1));
         cpu.clock += ifx (addr & 0xFF00) != (cpu.pc & 0xFF00) then 2 else 1;
     } else {
         cpu.pc += 2;
