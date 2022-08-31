@@ -16,14 +16,26 @@ main :: () {
     // @TEMPORARY: testing the cpu using nestest.nes
     // {
     cpu.pc = 0xC000; // nestest requires starting at 0xC000
-    for 1..25 {
+    while true {
         op := read_byte(cpu.pc);
-        print("% % A:% X:% Y:% P:  SP:  PPU:  CYC:%\n",
+
+        // @TODO: figure out nestest's flag formatting
+        flags : u8 = (cast(u8)cpu.negative)          << 7 |
+                     (cast(u8)cpu.overflow)          << 6 |
+                                                   1 << 5 |
+                     (cast(u8)cpu.decimal)           << 3 |
+                     (cast(u8)cpu.interrupt_disable) << 2 |
+                     (cast(u8)cpu.zero)              << 1 |
+                     (cast(u8)cpu.carry)             << 0;
+
+        print("% % A:% X:% Y:% P:% SP:% PPU: CYC:%\n",
                 formatInt(cpu.pc,  base=16, minimum_digits=4),
                 formatInt(op,      base=16, minimum_digits=2),
                 formatInt(cpu.acc, base=16, minimum_digits=2),
                 formatInt(cpu.x  , base=16, minimum_digits=2),
                 formatInt(cpu.y  , base=16, minimum_digits=2),
+                formatInt(flags  , base=16, minimum_digits=2),
+                formatInt(cpu.sp , base=16, minimum_digits=2),
                 cpu.clock,
         );
         tick(op);
