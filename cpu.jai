@@ -335,14 +335,14 @@ pull_flags :: inline () {
 }
 
 push_flags :: inline (bit_5: u8, bit_4: u8) {
-    flags := (cast(u8)cpu.negative)          << 7 |
-             (cast(u8)cpu.overflow)          << 6 |
-             (cast(u8)bit_5)                 << 5 |
-             (cast(u8)bit_4)                 << 4 |
-             (cast(u8)cpu.decimal)           << 3 |
-             (cast(u8)cpu.interrupt_disable) << 2 |
-             (cast(u8)cpu.zero)              << 1 |
-             (cast(u8)cpu.carry)             << 0;
+    flags := ((cast(u8)cpu.negative)          << 7) |
+             ((cast(u8)cpu.overflow)          << 6) |
+             ((cast(u8)bit_5)                 << 5) |
+             ((cast(u8)bit_4)                 << 4) |
+             ((cast(u8)cpu.decimal)           << 3) |
+             ((cast(u8)cpu.interrupt_disable) << 2) |
+             ((cast(u8)cpu.zero)              << 1) |
+             ((cast(u8)cpu.carry)             << 0);
     push_stack(flags);
 }
 
