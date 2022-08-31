@@ -57,6 +57,7 @@ tick :: (opcode: u8) {
         case 0x7D; ADC(4, 3, absolute_x(extra_cycle = true));
         case 0x79; ADC(4, 3, absolute_y(extra_cycle = true));
 
+        case 0xEB; SBC(2, 2, immediate());
         case 0xE9; SBC(2, 2, immediate());
         case 0xE5; SBC(3, 2, zero_page());
         case 0xF5; SBC(4, 2, zero_page_x());
