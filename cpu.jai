@@ -383,7 +383,7 @@ SBC :: inline (cycles: s64, bytes: u16, location: u16) {
     sum     : u16 = cast(u16)cpu.acc - value - cast(u16)!cpu.carry;
     cpu.carry     = sum & 0x0100 == 0;
     cpu.overflow  = (cpu.acc ^ sum) & (~value ^ sum) & 0x80 != 0;
-    cpu.acc       = cast(u8)sum;
+    cpu.acc       = cast(u8)(sum & 0xFF);
     cpu.clock    += cycles;
     cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
