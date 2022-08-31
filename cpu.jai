@@ -102,6 +102,14 @@ tick :: (opcode: u8) {
         case 0xBD; LDA(4, 3, absolute_x(extra_cycle = true));
         case 0xB9; LDA(4, 3, absolute_y(extra_cycle = true));
 
+        case 0xAB; LAX(2, 2, immediate());
+        case 0xA7; LAX(3, 2, zero_page());
+        case 0xB7; LAX(4, 2, zero_page_y());
+        case 0xA3; LAX(6, 2, indirect_zero_page_x());
+        case 0xB3; LAX(5, 2, indirect_zero_page_y(extra_cycle = true));
+        case 0xAF; LAX(4, 3, absolute());
+        case 0xBF; LAX(4, 3, absolute_y(extra_cycle = true));
+
         case 0xA2; LDX(2, 2, immediate());
         case 0xA6; LDX(3, 2, zero_page());
         case 0xB6; LDX(4, 2, zero_page_y());
@@ -428,6 +436,14 @@ INC :: inline (cycles: s64, bytes: u16, location: u16) {
 
 LDA :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.acc    = read_byte(location);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+    set_negative_and_zero_flags(cpu.acc);
+}
+
+LAX :: inline (cycles: s64, bytes: u16, location: u16) {
+    cpu.acc    = read_byte(location);
+    cpu.x      = cpu.acc;
     cpu.clock += cycles;
     cpu.pc    += bytes;
     set_negative_and_zero_flags(cpu.acc);
