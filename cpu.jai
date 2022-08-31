@@ -138,6 +138,11 @@ tick :: (opcode: u8) {
         case 0x94; STY(4, 2, zero_page_x());
         case 0x8C; STY(4, 3, absolute());
 
+        case 0x87; SAX(3, 2, zero_page());
+        case 0x97; SAX(4, 2, zero_page_y());
+        case 0x83; SAX(6, 2, indirect_zero_page_x());
+        case 0x8F; SAX(4, 3, absolute());
+
         case 0x10; branch_relative(!negative);  // BPL
         case 0x30; branch_relative( negative);  // BMI
         case 0x50; branch_relative(!overflow);  // BVC
@@ -477,6 +482,12 @@ STX :: inline (cycles: s64, bytes: u16, location: u16) {
 
 STY :: inline (cycles: s64, bytes: u16, location: u16) {
     write_byte(location, cpu.y);
+    cpu.clock += cycles;
+    cpu.pc    += bytes;
+}
+
+SAX :: inline (cycles: s64, bytes: u16, location: u16) {
+    write_byte(location, cpu.acc & cpu.x);
     cpu.clock += cycles;
     cpu.pc    += bytes;
 }
