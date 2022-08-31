@@ -571,9 +571,10 @@ transfer :: inline (src: u8, dest: *u8, set_flags: bool) {
 }
 
 compare :: inline (cycles: s64, bytes: u16, src: u8, location: u16) {
-    value     := read_byte(location);
-    cpu.carry  = src >= value;
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    set_negative_and_zero_flags(src - value);
+    value       := read_byte(location);
+    cpu.clock   += cycles;
+    cpu.pc      += bytes;
+    cpu.negative = src == value;
+    cpu.carry    = src >= value;
+    cpu.zero     = src != value;
 }
