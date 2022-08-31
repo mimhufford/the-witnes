@@ -19,14 +19,13 @@ main :: () {
     while true {
         op := read_byte(cpu.pc);
 
-        // @TODO: figure out nestest's flag formatting
-        flags : u8 = (cast(u8)cpu.negative)          << 7 |
-                     (cast(u8)cpu.overflow)          << 6 |
-                                                   1 << 5 |
-                     (cast(u8)cpu.decimal)           << 3 |
-                     (cast(u8)cpu.interrupt_disable) << 2 |
-                     (cast(u8)cpu.zero)              << 1 |
-                     (cast(u8)cpu.carry)             << 0;
+        flags : u8 = ((cast(u8)cpu.negative)          << 7) |
+                     ((cast(u8)cpu.overflow)          << 6) |
+                     ((cast(u8)1)                     << 5) |
+                     ((cast(u8)cpu.decimal)           << 3) |
+                     ((cast(u8)cpu.interrupt_disable) << 2) |
+                     ((cast(u8)cpu.zero)              << 1) |
+                     ((cast(u8)cpu.carry)             << 0);
 
         print("% % A:% X:% Y:% P:% SP:% PPU: CYC:%\n",
                 formatInt(cpu.pc,  base=16, minimum_digits=4),
