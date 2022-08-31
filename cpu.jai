@@ -102,6 +102,14 @@ tick :: (opcode: u8) {
         case 0xEE; INC(6, 3, absolute());
         case 0xFE; INC(7, 3, absolute_x());
 
+        case 0xE7; ISC(5, 2, zero_page());
+        case 0xF7; ISC(6, 2, zero_page_x());
+        case 0xE3; ISC(8, 2, indirect_zero_page_x());
+        case 0xF3; ISC(8, 2, indirect_zero_page_y());
+        case 0xEF; ISC(6, 3, absolute());
+        case 0xFF; ISC(7, 3, absolute_x());
+        case 0xFB; ISC(7, 3, absolute_y());
+
         case 0xA9; LDA(2, 2, immediate());
         case 0xA5; LDA(3, 2, zero_page());
         case 0xB5; LDA(4, 2, zero_page_x());
@@ -451,6 +459,11 @@ INC :: inline (cycles: s64, bytes: u16, location: u16) {
     value     := read_byte(location) + 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
+}
+
+ISC :: inline (cycles: s64, bytes: u16, location: u16) {
+    INC(0, 0, location);
+    SBC(cycles, bytes, location);
 }
 
 LDA :: inline (cycles: s64, bytes: u16, location: u16) {
