@@ -24,8 +24,8 @@ load_cartridge :: (filename: string) -> Cartridge, bool {
     mapper = ((data[8] & 0b00001111) << 8) | (data[7] & 0b11110000) | (data[6] >> 4);
     sub_mapper = data[8] >> 4;
 
-    prg_rom.count = (((data[9] & 0b00001111) << 4) | data[4]) * 16;
-    chr_rom.count = (((data[9] & 0b11110000) << 0) | data[5]) *  8;
+    prg_rom.count = (((data[9] & 0b00001111) << 4) | data[4]) * 16 * 1024;
+    chr_rom.count = (((data[9] & 0b11110000) << 0) | data[5]) *  8 * 1024;
     if data.count < 16 + prg_rom.count + chr_rom.count return .{}, false;
 
     prg_rom.data = alloc(prg_rom.count);
