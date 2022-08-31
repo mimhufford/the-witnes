@@ -182,7 +182,30 @@ tick :: (opcode: u8) {
         case 0x78; set_flag(*interrupt_disable, true);   // SEI
         case 0xB8; set_flag(*overflow,          false);  // CLV
 
-        case 0xEA; NOP();
+        case 0x1A; NOP(1);
+        case 0x3A; NOP(1);
+        case 0x5A; NOP(1);
+        case 0x7A; NOP(1);
+        case 0xDA; NOP(1);
+        case 0xEA; NOP(1);
+        case 0xFA; NOP(1);
+        case 0x04; NOP(2);
+        case 0x14; NOP(2);
+        case 0x34; NOP(2);
+        case 0x44; NOP(2);
+        case 0x54; NOP(2);
+        case 0x64; NOP(2);
+        case 0x74; NOP(2);
+        case 0x80; NOP(2);
+        case 0xD4; NOP(2);
+        case 0xF4; NOP(2);
+        case 0x0C; NOP(3);
+        case 0x1C; NOP(3);
+        case 0x3C; NOP(3);
+        case 0x5C; NOP(3);
+        case 0x7C; NOP(3);
+        case 0xDC; NOP(3);
+        case 0xFC; NOP(3);
 
         case 0xAA; transfer(acc, *x, set_flags = true);   // TAX
         case 0x8A; transfer(x, *acc, set_flags = true);   // TXA
@@ -242,7 +265,7 @@ tick :: (opcode: u8) {
         clock += 3;
         pc    += 1;
 
-        case; assert(false, "Unhandled opcode [%]", opcode);
+        case; assert(false, "Unhandled opcode [%]", formatInt(opcode, base=16));
     }
 }
 
@@ -456,9 +479,10 @@ JMP :: inline (cycles: s64, location: u16) {
     cpu.pc     = location;
 }
 
-NOP :: inline () {
+NOP :: inline (bytes: u16) {
+    // @TODO: clock based on type of NOP
     cpu.clock += 2;
-    cpu.pc    += 1;
+    cpu.pc    += bytes;
 }
 
 ASL :: inline (cycles: s64, bytes: u16) {
