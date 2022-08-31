@@ -16,11 +16,15 @@ main :: () {
     // @TEMPORARY: testing the cpu using nestest.nes
     // {
     cpu.pc = 0xC000; // nestest requires starting at 0xC000
-    for 1..10 {
+    for 1..25 {
         op := read_byte(cpu.pc);
-        print("% %\n",
-                formatInt(cpu.pc, base=16, minimum_digits=4),
-                formatInt(op,     base=16, minimum_digits=2),
+        print("% % A:% X:% Y:% P:  SP:  PPU:  CYC:%\n",
+                formatInt(cpu.pc,  base=16, minimum_digits=4),
+                formatInt(op,      base=16, minimum_digits=2),
+                formatInt(cpu.acc, base=16, minimum_digits=2),
+                formatInt(cpu.x  , base=16, minimum_digits=2),
+                formatInt(cpu.y  , base=16, minimum_digits=2),
+                cpu.clock,
         );
         tick(op);
     }
