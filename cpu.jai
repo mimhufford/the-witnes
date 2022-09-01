@@ -180,6 +180,14 @@ tick :: (opcode: u8) {
         case 0x0E; ASL(6, 3, absolute());
         case 0x1E; ASL(7, 3, absolute_x());
 
+        case 0x07; SLO(5, 2, zero_page());
+        case 0x17; SLO(6, 2, zero_page_x());
+        case 0x03; SLO(8, 2, indirect_zero_page_x());
+        case 0x13; SLO(8, 2, indirect_zero_page_y());
+        case 0x0F; SLO(6, 3, absolute());
+        case 0x1F; SLO(7, 3, absolute_x());
+        case 0x1B; SLO(7, 3, absolute_y());
+
         case 0x2A; ROL(2, 1);
         case 0x26; ROL(5, 2, zero_page());
         case 0x36; ROL(6, 2, zero_page_x());
@@ -537,6 +545,11 @@ ASL :: inline (cycles: s64, bytes: u16, location: u16) {
     value    <<= 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
+}
+
+SLO :: inline (cycles: s64, bytes: u16, location: u16) {
+    ASL(0, 0, location);
+    ORA(cycles, bytes, location);
 }
 
 LSR :: inline (cycles: s64, bytes: u16) {
