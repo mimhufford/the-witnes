@@ -343,12 +343,13 @@ indirect :: inline () -> u16 {
 }
 
 indirect_zero_page_x :: inline () -> u16 {
-    zero : u8 = read_byte(cpu.pc + 1) + cpu.x;
+    zero := read_byte(cpu.pc + 1) + cpu.x;
     return (cast(u16)read_byte(zero + 1)) << 8 | read_byte(zero);
 }
 
 indirect_zero_page_y :: inline (extra_cycle := false) -> u16 {
-    addr := read_word(read_byte(cpu.pc + 1));
+    zero := read_byte(cpu.pc + 1);
+    addr := (cast(u16)read_byte(zero + 1)) << 8 | read_byte(zero);
     if extra_cycle && (addr & 0xFF00) != ((addr + cpu.y) & 0xFF00) cpu.clock += 1;
     return addr + cpu.y;
 }
