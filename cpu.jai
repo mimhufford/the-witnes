@@ -226,9 +226,9 @@ tick :: (opcode: u8) {
         case 0x57; SRE(6, 2, zero_page_x());
         case 0x43; SRE(8, 2, indirect_zero_page_x());
         case 0x53; SRE(8, 2, indirect_zero_page_y());
-        case 0x4F; SRE(6, 2, absolute());
-        case 0x5F; SRE(7, 2, absolute_x());
-        case 0x5B; SRE(7, 2, absolute_y());
+        case 0x4F; SRE(6, 3, absolute());
+        case 0x5F; SRE(7, 3, absolute_x());
+        case 0x5B; SRE(7, 3, absolute_y());
 
         case 0x4C; JMP(3, absolute());
         case 0x6C; JMP(5, indirect());
