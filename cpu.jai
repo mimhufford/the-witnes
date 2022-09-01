@@ -343,7 +343,8 @@ indirect :: inline () -> u16 {
 }
 
 indirect_zero_page_x :: inline () -> u16 {
-    return read_word(read_byte(cpu.pc + 1) + cpu.x);
+    zero : u8 = read_byte(cpu.pc + 1) + cpu.x;
+    return (cast(u16)read_byte(zero + 1)) << 8 | read_byte(zero);
 }
 
 indirect_zero_page_y :: inline (extra_cycle := false) -> u16 {
