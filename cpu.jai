@@ -208,6 +208,14 @@ tick :: (opcode: u8) {
         case 0x6E; ROR(6, 3, absolute());
         case 0x7E; ROR(7, 3, absolute_x());
 
+        case 0x67; RRA(5, 2, zero_page());
+        case 0x77; RRA(6, 2, zero_page_x());
+        case 0x63; RRA(8, 2, indirect_zero_page_x());
+        case 0x73; RRA(8, 2, indirect_zero_page_y());
+        case 0x6F; RRA(6, 3, absolute());
+        case 0x7F; RRA(7, 3, absolute_x());
+        case 0x7B; RRA(7, 3, absolute_y());
+
         case 0x4A; LSR(2, 1);
         case 0x46; LSR(5, 2, zero_page());
         case 0x56; LSR(6, 2, zero_page_x());
@@ -638,6 +646,11 @@ ROR :: inline (cycles: s64, bytes: u16, location: u16) {
     value     |= (cast(u8)pre_carry) << 7;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
+}
+
+RRA :: inline (cycles: s64, bytes: u16, location: u16) {
+    ROR(0, 0, location);
+    ADC(cycles, bytes, location);
 }
 
 decrement :: inline (reg: *u8) {
