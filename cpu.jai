@@ -17,8 +17,10 @@ CPU :: struct {
     clock : s64; // how many cycles the CPU has performed
 }
 
-tick :: (opcode: u8) {
+cpu_tick :: (opcode: u8) -> s64 {
     using cpu;
+
+    cycles_this_tick := clock;
 
     if opcode == {
         case 0x09; ORA(2, 2, immediate());
@@ -329,6 +331,8 @@ tick :: (opcode: u8) {
 
         case; assert(false, "Unhandled opcode [%]", formatInt(opcode, base=16));
     }
+
+    return clock - cycles_this_tick;
 }
 
 #scope_file

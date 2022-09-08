@@ -27,7 +27,7 @@ main :: () {
                      ((cast(u8)cpu.zero)              << 1) |
                      ((cast(u8)cpu.carry)             << 0);
 
-        print("%  %  A:% X:% Y:% P:% SP:% PPU: CYC:%\n",
+        print("%  %  A:% X:% Y:% P:% SP:% PPU:% CYC:%\n",
                 formatInt(cpu.pc,  base=16, minimum_digits=4),
                 formatInt(op,      base=16, minimum_digits=2),
                 formatInt(cpu.acc, base=16, minimum_digits=2),
@@ -35,9 +35,12 @@ main :: () {
                 formatInt(cpu.y  , base=16, minimum_digits=2),
                 formatInt(flags  , base=16, minimum_digits=2),
                 formatInt(cpu.sp , base=16, minimum_digits=2),
+                ppu.vblank,
                 cpu.clock,
         );
-        tick(op);
+
+        cycles := cpu_tick(op);
+        ppu_tick(cycles * 3);
     }
     // }
 }
@@ -53,7 +56,7 @@ read_byte :: (address: u16) -> u8 {
     assert(address >= 0x0000);
     assert(address <= 0xFFFF);
     if address < 0x2000 return ram[address % 0x0800];
-    if address < 0x4000 return ppu[address % 0x0008];
+    if address < 0x4000 return ppu_read_byte(address % 0x0008);
     if address < 0x4020 return apu[address % 0x0020];
     return mapper_read_byte(address);
     // @TODO: use correct mapper based on current cartridge
@@ -63,7 +66,7 @@ write_byte :: (address: u16, value: u8) {
     assert(address >= 0x0000);
     assert(address <= 0xFFFF);
     if      address < 0x2000 ram[address % 0x0800] = value;
-    else if address < 0x4000 ppu[address % 0x0008] = value;
+    else if address < 0x4000 ppu_write_byte(address % 0x0008, value);
     else if address < 0x4020 apu[address % 0x0020] = value;
     else mapper_write_byte(address, value);
     // @TODO: use correct mapper based on current cartridge
@@ -82,11 +85,12 @@ mapper_write_byte :: (address: u16, value: u8) {
 }
 
 ram  : [2048]u8;
-ppu  : [   8]u8;
-apu  : [  32]u8;
 cpu  : CPU;
+ppu  : PPU;
+apu  : [  32]u8;
 cart : Cartridge;
 
 #import "Basic";
 #load "cartridge.jai";
 #load "cpu.jai";
+#load "ppu.jai";
