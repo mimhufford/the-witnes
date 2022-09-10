@@ -1,6 +1,13 @@
 PPU :: struct {
     // register bytes unpacked for convenience
-    vblank : bool;  // ppustatus - 0x2002 - 0b_1000_0000
+    base_nametable_address   : u16;   // ppuctrl   - 0x2000 - 0b_0000_0011
+    vram_address_increment   : u8;    // ppuctrl   - 0x2000 - 0b_0000_0100
+    sprite_table_address     : u16;   // ppuctrl   - 0x2000 - 0b_0000_1000
+    background_table_address : u16;   // ppuctrl   - 0x2000 - 0b_0001_0000
+    big_sprites              : bool;  // ppuctrl   - 0x2000 - 0b_0010_0000
+    master_slave_select      : u8;    // ppuctrl   - 0x2000 - 0b_0100_0000
+    generate_interrupt       : bool;  // ppuctrl   - 0x2000 - 0b_1000_0000
+    vblank                   : bool;  // ppustatus - 0x2002 - 0b_1000_0000
 
     clock  : s64;
 }
@@ -18,7 +25,17 @@ ppu_read_byte :: (address: u16) -> u8 {
 }
 
 ppu_write_byte :: (address: u16, value: u8) {
-    // @TODO
+    using ppu;
+
+    if address == 0 {
+        base_nametable_address   = cast(u16)0x2000 + (cast(u16)value & 0b11) * 0x400;
+        vram_address_increment   = 1 + ((value & 0b_0000_0100) >> 2) * 31;
+        sprite_table_address     = (cast(u16)value & 0b_0000_1000) * 0x1000;
+        background_table_address = (cast(u16)value & 0b_0001_0000) * 0x1000;
+        big_sprites              = (value & 0b_0010_0000) > 0;
+        master_slave_select      = (value & 0b_0100_0000) >> 6;
+        generate_interrupt       = (value & 0b_1000_0000) > 0;
+    }
 }
 
 ppu_tick :: (cycles: s64) {
