@@ -1,5 +1,4 @@
 PPU :: struct {
-    // register bytes unpacked for convenience
     base_nametable_address   : u16;   // ppuctrl   - 0x2000 - 0b_0000_0011
     vram_address_increment   : u8;    // ppuctrl   - 0x2000 - 0b_0000_0100
     sprite_table_address     : u16;   // ppuctrl   - 0x2000 - 0b_0000_1000
@@ -20,6 +19,9 @@ PPU :: struct {
     sprite_0_hit             : bool;  // ppustatus - 0x2002 - 0b_0100_0000
     sprite_overflow          : bool;  // ppustatus - 0x2002 - 0b_0010_0000
 
+    oam_address              : u8;    // oamaddr   - 0x2003 - 0b_1111_1111
+    oam_data                 : u8;    // oamdata   - 0x2004 - 0b_1111_1111
+
     clock  : s64;
 }
 
@@ -32,6 +34,8 @@ ppu_read_byte :: (address: u16) -> u8 {
                   (cast(u8)sprite_overflow) << 5;
         vblank = false;
         return status;
+    } else if address == 4 {
+        return oam_data;
     } else {
         assert(false, "Only handling 0x2002 PPUSTATUS for now");
         return 0;
@@ -58,6 +62,10 @@ ppu_write_byte :: (address: u16, value: u8) {
         emphasise_red            = (value & 0b_0010_0000) > 0;
         emphasise_green          = (value & 0b_0100_0000) > 0;
         emphasise_blue           = (value & 0b_1000_0000) > 0;
+    } else if address == 3 {
+        oam_address              = value;
+    } else if address == 4 {
+        oam_data                 = value;
     }
 }
 
