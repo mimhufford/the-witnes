@@ -17,6 +17,8 @@ PPU :: struct {
     emphasise_blue           : bool;  // ppumask   - 0x2001 - 0b_1000_0000
 
     vblank                   : bool;  // ppustatus - 0x2002 - 0b_1000_0000
+    sprite_0_hit             : bool;  // ppustatus - 0x2002 - 0b_0100_0000
+    sprite_overflow          : bool;  // ppustatus - 0x2002 - 0b_0010_0000
 
     clock  : s64;
 }
@@ -24,13 +26,16 @@ PPU :: struct {
 ppu_read_byte :: (address: u16) -> u8 {
     using ppu;
 
-    assert(address == 2, "@TEMPORARY, only handling 0x2002 PPUSTATUS for now");
-
-    status := (cast(u8)vblank) << 7;
-
-    vblank = false;
-
-    return status;
+    if address == 2 {
+        status := (cast(u8)vblank)          << 7 |
+                  (cast(u8)sprite_0_hit)    << 6;
+                  (cast(u8)sprite_overflow) << 5;
+        vblank = false;
+        return status;
+    } else {
+        assert(false, "Only handling 0x2002 PPUSTATUS for now");
+        return 0;
+    }
 }
 
 ppu_write_byte :: (address: u16, value: u8) {
@@ -64,6 +69,9 @@ ppu_tick :: (cycles: s64) {
     // @TODO: does vblank have to be set on rising and falling edges?
     //        once up and running test if this can simply be:
     //            vblank = frame_clock > vblank_edge;
+
+    // @TODO: sprite_0_hit
+    // @TODO: sprite_overflow
 
     frame_clock := clock % (341 * 262);
     vblank_edge :: 341 * 241;
