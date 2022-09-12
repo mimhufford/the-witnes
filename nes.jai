@@ -9,9 +9,7 @@ main :: () {
     if !ok { print("Could not load cartridge\n"); return; }
 
     // initalise the system with the default power on state
-    cpu.sp = 0xFD;
-    cpu.interrupt_disable = true;
-    cpu.pc = read_word(0xFFFC);
+    cpu_reset();
 
     // @TEMPORARY: testing the cpu using nestest.nes
     // {
@@ -40,7 +38,9 @@ main :: () {
         );
 
         cycles := cpu_tick(op);
-        ppu_tick(cycles * 3);
+        vblank := ppu_tick(cycles * 3);
+
+        if vblank cpu_nmi();
     }
     // }
 }

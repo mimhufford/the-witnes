@@ -335,6 +335,20 @@ cpu_tick :: (opcode: u8) -> s64 {
     return clock - cycles_this_tick;
 }
 
+cpu_reset :: () {
+    cpu.sp = 0xFD;
+    cpu.interrupt_disable = true;
+    cpu.pc = read_word(0xFFFC);
+}
+
+cpu_nmi :: () {
+    push_stack(cast(u8)((cpu.pc + 1) >> 8));
+    push_stack(cast(u8)((cpu.pc + 1) >> 0));
+    push_flags(1, 1);
+    cpu.pc     = read_word(0xFFFA);
+    cpu.clock += 6;
+}
+
 #scope_file
 
 immediate :: inline () -> u16 {

@@ -69,7 +69,7 @@ ppu_write_byte :: (address: u16, value: u8) {
     }
 }
 
-ppu_tick :: (cycles: s64) {
+ppu_tick :: (cycles: s64) -> (vblank_interrupt: bool) {
     using ppu;
 
     clock += cycles;
@@ -81,8 +81,12 @@ ppu_tick :: (cycles: s64) {
     // @TODO: sprite_0_hit
     // @TODO: sprite_overflow
 
+    vblank_before := vblank;
+
     frame_clock := clock % (341 * 262);
     vblank_edge :: 341 * 241;
     if     !vblank && frame_clock >  vblank_edge then vblank = true;
     else if vblank && frame_clock <= vblank_edge then vblank = false;
+
+    return generate_interrupt && !vblank_before && vblank;
 }
