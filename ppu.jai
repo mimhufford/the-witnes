@@ -35,9 +35,9 @@ ppu_read_byte :: (address: u16) -> u8 {
 
     if address == 2 {
         // PPUSTATUS
-        status := (cast(u8)vblank)          << 7 |
-                  (cast(u8)sprite_0_hit)    << 6;
-                  (cast(u8)sprite_overflow) << 5;
+        status := ((cast(u8)vblank)          << 7) |
+                  ((cast(u8)sprite_0_hit)    << 6) |
+                  ((cast(u8)sprite_overflow) << 5);
         vblank      = false;
         ppu_address = 0;
         return status;
