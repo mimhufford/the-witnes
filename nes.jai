@@ -11,9 +11,8 @@ main :: () {
     // initalise the system with the default power on state
     cpu_reset();
 
-    // @TEMPORARY: testing the cpu using nestest.nes
+    // @TEMPORARY: testing the ppu using nestest.nes
     // {
-    cpu.pc = 0xC000; // nestest requires starting at 0xC000
     while true {
         op := read_byte(cpu.pc);
 
