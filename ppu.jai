@@ -24,10 +24,23 @@ PPU :: struct {
     ppu_scroll               : u16;   // ppuscroll - 0x2005 - 0b_1111_1111
     ppu_address              : u16;   // ppuaddr   - 0x2006 - 0b_1111_1111
 
-    vram   : [16 * 1024]u8;
+    vram_page_0000 : []u8;
+    vram_page_1000 : []u8;
+    vram   : [8 * 1024]u8;
     oam    : [256]u8;
 
     clock  : s64;
+}
+
+ppu_init :: (chr_rom: []u8) {
+    ppu.base_nametable_address = 0x2000;
+    ppu.vram_address_increment = 1;
+    // @TODO: this is a it gross, can it all just be vram?
+    // @TODO: this currently assumes there is only 1 page of chr_rom data
+    ppu.vram_page_0000.data = chr_rom.data;
+    ppu.vram_page_1000.data = chr_rom.data;
+    ppu.vram_page_0000.count = 8 * 1024;
+    ppu.vram_page_1000.count = 8 * 1024;
 }
 
 ppu_read_byte :: (address: u16) -> u8 {
@@ -46,7 +59,7 @@ ppu_read_byte :: (address: u16) -> u8 {
         return oam_data;
     } else if address == 7 {
         // PPUDATA
-        value := vram[ppu_address];
+        value := vram[ppu_address - 0x2000];
         ppu_address += vram_address_increment;
         return value;
     } else {
@@ -92,31 +105,42 @@ ppu_write_byte :: (address: u16, value: u8) {
     } else if address == 7 {
         // PPUDATA
         // @TODO: mirroring
-        vram[ppu_address] = value;
+        vram[ppu_address - 0x2000] = value;
         ppu_address += vram_address_increment;
     } else {
         assert(false, "Unhandled ppu_write address: %", address);
     }
 }
 
-ppu_tick :: (cycles: s64) -> (vblank_interrupt: bool) {
+ppu_tick :: () -> (vblank_interrupt: bool) {
     using ppu;
 
-    clock += cycles;
+    horizontal_pixel := clock % 341;
+    vertical_pixel   := clock / 341;
+
+    if vertical_pixel < 240 && horizontal_pixel < 256 {
+        horizontal_tile := horizontal_pixel % 32;
+        verticle_tile := vertical_pixel / 8;
+
+        nametable_entry := vram[base_nametable_address - 0x2000 + (verticle_tile * 32) + horizontal_tile];
+        print("%", nametable_entry);
+    }
 
     // @TODO: does vblank have to be set on rising and falling edges?
     //        once up and running test if this can simply be:
-    //            vblank = frame_clock > vblank_edge;
+    //            vblank = frame > vblank_edge;
 
     // @TODO: sprite_0_hit
     // @TODO: sprite_overflow
 
     vblank_before := vblank;
 
-    frame_clock := clock % (341 * 262);
+    frame := clock % (341 * 262);
     vblank_edge :: 341 * 241;
-    if     !vblank && frame_clock >  vblank_edge then vblank = true;
-    else if vblank && frame_clock <= vblank_edge then vblank = false;
+    if     !vblank && frame >  vblank_edge then vblank = true;
+    else if vblank && frame <= vblank_edge then vblank = false;
+
+    clock += 1;
 
     return generate_interrupt && !vblank_before && vblank;
 }

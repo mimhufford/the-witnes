@@ -14,13 +14,18 @@ CPU :: struct {
     overflow          : bool;
     negative          : bool;
     
-    clock : s64; // how many cycles the CPU has performed
+    clock    : s64; // how many cycles the CPU has performed
+    op_ticks : s64; // how many cycles until performing next op
 }
 
-cpu_tick :: (opcode: u8) -> s64 {
+cpu_tick :: (opcode: u8) {
     using cpu;
 
-    cycles_this_tick := clock;
+    if op_ticks > 0 {
+        op_ticks -= 1;
+        clock += 1;
+        return;
+    } 
 
     if opcode == {
         case 0x09; ORA(2, 2, immediate());
@@ -279,39 +284,39 @@ cpu_tick :: (opcode: u8) -> s64 {
         case 0x9A; transfer(x, *sp,  set_flags = false);  // TXS
 
         case 0x00; // BRK
-        push_stack(cast(u8)((pc + 1) >> 8));
-        push_stack(cast(u8)((pc + 1) >> 0));
+        push_stack(cast,no_check(u8)((pc + 1) >> 8));
+        push_stack(cast,no_check(u8)((pc + 1) >> 0));
         push_flags(1, 1);
         interrupt_disable = true;
-        clock += 7;
-        pc     = read_word(0xFFFE);
+        op_ticks += 7;
+        pc = read_word(0xFFFE);
 
         case 0x40; // RTI
         pull_flags();
-        clock += 6;
-        pc     = (cast(u16)pull_stack()) | ((cast(u16)pull_stack()) << 8);
+        op_ticks += 6;
+        pc = (cast(u16)pull_stack()) | ((cast(u16)pull_stack()) << 8);
 
         case 0x20; // JSR
         push_stack(cast(u8)(((pc + 2) >> 8) & 0xFF));
         push_stack(cast(u8)(((pc + 2) >> 0) & 0xFF));
-        clock += 6;
-        pc     = read_word(pc + 1);
+        op_ticks += 6;
+        pc = read_word(pc + 1);
 
         case 0x60; // RTS
-        clock += 6;
-        pc     = (cast(u16)pull_stack()) | ((cast(u16)pull_stack()) << 8);
-        pc    += 1;
+        op_ticks += 6;
+        pc  = (cast(u16)pull_stack()) | ((cast(u16)pull_stack()) << 8);
+        pc += 1;
 
         case 0x68; // PLA
         acc = pull_stack();
         set_negative_and_zero_flags(acc);
-        clock += 4;
-        pc    += 1;
+        op_ticks += 4;
+        pc += 1;
 
         case 0x48; // PHA
         push_stack(acc);
-        clock += 3;
-        pc    += 1;
+        op_ticks += 3;
+        pc += 1;
 
         case 0x28; // PLP
         flags := pull_stack();
@@ -321,18 +326,16 @@ cpu_tick :: (opcode: u8) -> s64 {
         interrupt_disable = flags & 0b_0000_0100 > 0;
         zero              = flags & 0b_0000_0010 > 0;
         carry             = flags & 0b_0000_0001 > 0;
-        clock += 4;
-        pc    += 1;
+        op_ticks += 4;
+        pc += 1;
 
         case 0x08; // PHP
         push_flags(1, 1);
-        clock += 3;
-        pc    += 1;
+        op_ticks += 3;
+        pc += 1;
 
         case; assert(false, "Unhandled opcode [%]", formatInt(opcode, base=16));
     }
-
-    return clock - cycles_this_tick;
 }
 
 cpu_reset :: () {
@@ -342,11 +345,11 @@ cpu_reset :: () {
 }
 
 cpu_nmi :: () {
-    push_stack(cast(u8)((cpu.pc + 1) >> 8));
-    push_stack(cast(u8)((cpu.pc + 1) >> 0));
+    push_stack(cast,no_check(u8)((cpu.pc + 1) >> 8));
+    push_stack(cast,no_check(u8)((cpu.pc + 1) >> 0));
     push_flags(1, 1);
-    cpu.pc     = read_word(0xFFFA);
-    cpu.clock += 6;
+    cpu.pc = read_word(0xFFFA);
+    cpu.op_ticks += 6;
 }
 
 #scope_file
@@ -368,7 +371,7 @@ indirect_zero_page_x :: inline () -> u16 {
 indirect_zero_page_y :: inline (extra_cycle := false) -> u16 {
     zero := read_byte(cpu.pc + 1);
     addr := (cast(u16)read_byte(zero + 1)) << 8 | read_byte(zero);
-    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.y) & 0xFF00) cpu.clock += 1;
+    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.y) & 0xFF00) cpu.op_ticks += 1;
     return addr + cpu.y;
 }
 
@@ -390,22 +393,22 @@ absolute :: inline () -> u16 {
 
 absolute_x :: inline (extra_cycle := false) -> u16 {
     addr := read_word(cpu.pc + 1);
-    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.x) & 0xFF00) cpu.clock += 1;
+    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.x) & 0xFF00) cpu.op_ticks += 1;
     return addr + cpu.x;
 }
 
 absolute_y :: inline (extra_cycle := false) -> u16 {
     addr := read_word(cpu.pc + 1);
-    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.y) & 0xFF00) cpu.clock += 1;
+    if extra_cycle && (addr & 0xFF00) != ((addr + cpu.y) & 0xFF00) cpu.op_ticks += 1;
     return addr + cpu.y;
 }
 
 branch_relative :: inline (condition: bool) {
-    cpu.clock += 2;
+    cpu.op_ticks += 2;
     if condition {
         addr := cpu.pc;
         cpu.pc = cast,no_check(u16)(cast,no_check(s16)(cpu.pc + 2) + cast,no_check(s8) read_byte(cpu.pc + 1));
-        cpu.clock += ifx (addr & 0xFF00) != (cpu.pc & 0xFF00) then 2 else 1;
+        cpu.op_ticks += ifx (addr & 0xFF00) != (cpu.pc & 0xFF00) then 2 else 1;
     } else {
         cpu.pc += 2;
     }
@@ -450,23 +453,23 @@ push_flags :: inline (bit_5: u8, bit_4: u8) {
 }
 
 ORA :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.acc   |= read_byte(location);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.acc      |= read_byte(location);
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 AND :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.acc   &= read_byte(location);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.acc      &= read_byte(location);
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 EOR :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.acc   ^= read_byte(location);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.acc      ^= read_byte(location);
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
@@ -476,7 +479,7 @@ ADC :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.carry     = sum & 0x0100 != 0;
     cpu.overflow  = (cpu.acc ^ sum) & (value ^ sum) & 0x80 != 0;
     cpu.acc       = cast(u8)(sum & 0xFF);
-    cpu.clock    += cycles;
+    cpu.op_ticks += cycles;
     cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
@@ -487,15 +490,15 @@ SBC :: inline (cycles: s64, bytes: u16, location: u16) {
     cpu.carry     = sum & 0x0100 == 0;
     cpu.overflow  = (cpu.acc ^ sum) & (~value ^ sum) & 0x80 != 0;
     cpu.acc       = cast(u8)(sum & 0xFF);
-    cpu.clock    += cycles;
+    cpu.op_ticks += cycles;
     cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 DEC :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    value     := read_byte(location) - 1;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    value        := read_byte(location) - 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
 }
@@ -506,9 +509,9 @@ DCP :: inline (cycles: s64, bytes: u16, location: u16) {
 }
 
 INC :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    value     := read_byte(location) + 1;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    value        := read_byte(location) + 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
 }
@@ -519,74 +522,74 @@ ISC :: inline (cycles: s64, bytes: u16, location: u16) {
 }
 
 LDA :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.acc    = read_byte(location);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.acc       = read_byte(location);
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 LAX :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.acc    = read_byte(location);
-    cpu.x      = cpu.acc;
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.acc       = read_byte(location);
+    cpu.x         = cpu.acc;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 LDX :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.x      = read_byte(location);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.x         = read_byte(location);
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.x);
 }
 
 LDY :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.y      = read_byte(location);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.y         = read_byte(location);
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
     set_negative_and_zero_flags(cpu.y);
 }
 
 store :: (cycles: s64, bytes: u16, value: u8, location: u16) {
     write_byte(location, value);
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
 }
 
 BIT :: inline (cycles: s64, bytes: u16, location: u16) {
-    value       := read_byte(location);
-    cpu.zero     = (value & cpu.acc) == 0;
-    cpu.negative = value & 0b_1000_0000 != 0;
-    cpu.overflow = value & 0b_0100_0000 != 0;
-    cpu.clock   += cycles;
-    cpu.pc      += bytes;
+    value        := read_byte(location);
+    cpu.zero      = (value & cpu.acc) == 0;
+    cpu.negative  = value & 0b_1000_0000 != 0;
+    cpu.overflow  = value & 0b_0100_0000 != 0;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
 }
 
 JMP :: inline (cycles: s64, location: u16) {
-    cpu.clock += cycles;
-    cpu.pc     = location;
+    cpu.op_ticks += cycles;
+    cpu.pc        = location;
 }
 
 NOP :: inline (bytes: u16) {
     // @TODO: clock based on type of NOP
-    cpu.clock += 2;
-    cpu.pc    += bytes;
+    cpu.op_ticks += 2;
+    cpu.pc       += bytes;
 }
 
 ASL :: inline (cycles: s64, bytes: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    cpu.carry  = cpu.acc & 0x80 != 0;
-    cpu.acc  <<= 1;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    cpu.carry     = cpu.acc & 0x80 != 0;
+    cpu.acc     <<= 1;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 ASL :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    value     := read_byte(location);
-    cpu.carry  = value & 0x80 != 0;
-    value    <<= 1;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    value        := read_byte(location);
+    cpu.carry     = value & 0x80 != 0;
+    value       <<= 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
 }
@@ -597,19 +600,19 @@ SLO :: inline (cycles: s64, bytes: u16, location: u16) {
 }
 
 LSR :: inline (cycles: s64, bytes: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    cpu.carry  = cpu.acc & 0x1 != 0;
-    cpu.acc  >>= 1;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    cpu.carry     = cpu.acc & 0x1 != 0;
+    cpu.acc     >>= 1;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 LSR :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    value     := read_byte(location);
-    cpu.carry  = value & 0x1 != 0;
-    value    >>= 1;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    value        := read_byte(location);
+    cpu.carry     = value & 0x1 != 0;
+    value       >>= 1;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
 }
@@ -620,23 +623,23 @@ SRE :: inline (cycles: s64, bytes: u16, location: u16) {
 }
 
 ROL :: inline (cycles: s64, bytes: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    pre_carry := cpu.carry;
-    cpu.carry  = cpu.acc & 0x80 != 0;
-    cpu.acc  <<= 1;
-    cpu.acc   |= cast(u8)pre_carry;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    pre_carry    := cpu.carry;
+    cpu.carry     = cpu.acc & 0x80 != 0;
+    cpu.acc     <<= 1;
+    cpu.acc      |= cast(u8)pre_carry;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 ROL :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    pre_carry := cpu.carry;
-    value     := read_byte(location);
-    cpu.carry  = value & 0x80 != 0;
-    value    <<= 1;
-    value     |= cast(u8)pre_carry;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    pre_carry    := cpu.carry;
+    value        := read_byte(location);
+    cpu.carry     = value & 0x80 != 0;
+    value       <<= 1;
+    value        |= cast(u8)pre_carry;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
 }
@@ -647,23 +650,23 @@ RLA :: inline (cycles: s64, bytes: u16, location: u16) {
 }
 
 ROR :: inline (cycles: s64, bytes: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    pre_carry := cpu.carry;
-    cpu.carry  = cpu.acc & 0x1 != 0;
-    cpu.acc  >>= 1;
-    cpu.acc   |= (cast(u8)pre_carry) << 7;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    pre_carry    := cpu.carry;
+    cpu.carry     = cpu.acc & 0x1 != 0;
+    cpu.acc     >>= 1;
+    cpu.acc      |= (cast(u8)pre_carry) << 7;
     set_negative_and_zero_flags(cpu.acc);
 }
 
 ROR :: inline (cycles: s64, bytes: u16, location: u16) {
-    cpu.clock += cycles;
-    cpu.pc    += bytes;
-    pre_carry := cpu.carry;
-    value     := read_byte(location);
-    cpu.carry  = value & 0x1 != 0;
-    value    >>= 1;
-    value     |= (cast(u8)pre_carry) << 7;
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    pre_carry    := cpu.carry;
+    value        := read_byte(location);
+    cpu.carry     = value & 0x1 != 0;
+    value       >>= 1;
+    value        |= (cast(u8)pre_carry) << 7;
     write_byte(location, value);
     set_negative_and_zero_flags(value);
 }
@@ -674,37 +677,37 @@ RRA :: inline (cycles: s64, bytes: u16, location: u16) {
 }
 
 decrement :: inline (reg: *u8) {
-    cpu.clock += 2;
-    cpu.pc    += 1;
-    <<reg     -= 1;
+    cpu.op_ticks += 2;
+    cpu.pc       += 1;
+    <<reg        -= 1;
     set_negative_and_zero_flags(<<reg);
 }
 
 increment :: inline (reg: *u8) {
-    cpu.clock += 2;
-    cpu.pc    += 1;
-    <<reg     += 1;
+    cpu.op_ticks += 2;
+    cpu.pc       += 1;
+    <<reg        += 1;
     set_negative_and_zero_flags(<<reg);
 }
 
 set_flag :: inline (flag: *bool, value: bool) {
-    cpu.clock += 2;
-    cpu.pc    += 1;
-    <<flag     = value;
+    cpu.op_ticks += 2;
+    cpu.pc       += 1;
+    <<flag        = value;
 }
 
 transfer :: inline (src: u8, dest: *u8, set_flags: bool) {
-    cpu.clock += 2;
-    cpu.pc    += 1;
-    <<dest     = src;
+    cpu.op_ticks += 2;
+    cpu.pc       += 1;
+    <<dest        = src;
     if set_flags then set_negative_and_zero_flags(src);
 }
 
 compare :: inline (cycles: s64, bytes: u16, src: u8, location: u16) {
-    value       := read_byte(location);
-    cpu.clock   += cycles;
-    cpu.pc      += bytes;
-    diff        := cast(u16)src - cast(u16)value;
-    cpu.carry    = !(diff & 0x100);
+    value        := read_byte(location);
+    cpu.op_ticks += cycles;
+    cpu.pc       += bytes;
+    diff         := cast(u16)src - cast(u16)value;
+    cpu.carry     = !(diff & 0x100);
     set_negative_and_zero_flags(cast,no_check(u8)diff);
 }

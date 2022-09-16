@@ -24,20 +24,22 @@ main :: () {
                      ((cast(u8)cpu.zero)              << 1) |
                      ((cast(u8)cpu.carry)             << 0);
 
-        print("%  %  A:% X:% Y:% P:% SP:% PPU:% CYC:%\n",
-                formatInt(cpu.pc,  base=16, minimum_digits=4),
-                formatInt(op,      base=16, minimum_digits=2),
-                formatInt(cpu.acc, base=16, minimum_digits=2),
-                formatInt(cpu.x  , base=16, minimum_digits=2),
-                formatInt(cpu.y  , base=16, minimum_digits=2),
-                formatInt(flags  , base=16, minimum_digits=2),
-                formatInt(cpu.sp , base=16, minimum_digits=2),
-                ppu.vblank,
-                cpu.clock,
-        );
+        // print("%  %  A:% X:% Y:% P:% SP:% PPU:% CYC:%\n",
+        //         formatInt(cpu.pc,  base=16, minimum_digits=4),
+        //         formatInt(op,      base=16, minimum_digits=2),
+        //         formatInt(cpu.acc, base=16, minimum_digits=2),
+        //         formatInt(cpu.x  , base=16, minimum_digits=2),
+        //         formatInt(cpu.y  , base=16, minimum_digits=2),
+        //         formatInt(flags  , base=16, minimum_digits=2),
+        //         formatInt(cpu.sp , base=16, minimum_digits=2),
+        //         ppu.vblank,
+        //         cpu.clock,
+        // );
 
-        cycles := cpu_tick(op);
-        vblank := ppu_tick(cycles * 3);
+        cpu_tick(op);
+        vblank := ppu_tick();
+        vblank |= ppu_tick();
+        vblank |= ppu_tick();
 
         if vblank cpu_nmi();
     }
