@@ -10,7 +10,12 @@ main :: () {
 
     // initalise the system with the default power on state
     cpu_reset();
-    render_init();
+    
+    // initalise the window and pixel buffer
+    window = Window.create_window(256, 240, "The WitNES", 100, 100);
+    set_render_target(window);
+    bitmap_alloc(*bitmap, 256, 240, .RGB8);
+    bitmap.data.data = xx ppu.buffer.data;
 
     // @TEMPORARY: testing the ppu using nestest.nes
     // {
@@ -48,44 +53,26 @@ main :: () {
     // }
 }
 
-read_word :: (address: u16) -> u16 {
-    result : u16;
-    result += (cast(u16)read_byte(address + 1)) << 8;
-    result += (cast(u16)read_byte(address + 0)) << 0;
-    return result;
+render :: () {
+    update_window_events();
+
+    for events_this_frame {
+        if it.type == {
+            case .KEYBOARD;
+            if it.key_pressed && it.key_code == .ESCAPE {
+                exit(0);
+            }
+        }
+    }
+
+    texture_load_from_bitmap(*texture, *bitmap);
+    set_shader_for_images(*texture);
+    immediate_begin();
+    immediate_quad(0, 0, 256, 240, .{1, 1, 1, 1});
+    immediate_flush();
+    swap_buffers(window);
 }
 
-read_byte :: (address: u16) -> u8 {
-    assert(address >= 0x0000);
-    assert(address <= 0xFFFF);
-    if address < 0x2000 return ram[address % 0x0800];
-    if address < 0x4000 return ppu_read_byte(address % 0x0008);
-    if address < 0x4020 return apu[address % 0x0020];
-    return mapper_read_byte(address);
-    // @TODO: use correct mapper based on current cartridge
-}
-
-write_byte :: (address: u16, value: u8) {
-    assert(address >= 0x0000);
-    assert(address <= 0xFFFF);
-    if      address < 0x2000 ram[address % 0x0800] = value;
-    else if address < 0x4000 ppu_write_byte(address % 0x0008, value);
-    else if address < 0x4020 apu[address % 0x0020] = value;
-    else mapper_write_byte(address, value);
-    // @TODO: use correct mapper based on current cartridge
-}
-
-// @TODO move into mapper.jai, this is just mapper 0 for now
-mapper_read_byte :: (address: u16) -> u8 {
-    assert(address >= 0x8000);
-    assert(cart.prg_rom.count == 16 * 1024 || cart.prg_rom.count == 32 * 1024);
-    return cart.prg_rom[address % cart.prg_rom.count];
-}
-
-// @TODO move into mapper.jai, this is just mapper 0 for now
-mapper_write_byte :: (address: u16, value: u8) {
-    assert(false);
-}
 
 ram  : [2048]u8;
 cpu  : CPU;
@@ -93,8 +80,16 @@ ppu  : PPU;
 apu  : [  32]u8;
 cart : Cartridge;
 
-#import "Basic";
+window : Window.Window_Type;
+bitmap : Bitmap;
+texture : Texture;
+
 #load "cartridge.jai";
 #load "cpu.jai";
 #load "ppu.jai";
-#load "render.jai";
+#load "mapper.jai";
+
+#import "Basic";
+#import "Simp";
+#import "Input";
+Window :: #import "Window_Creation";
