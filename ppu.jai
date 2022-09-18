@@ -137,8 +137,8 @@ ppu_tick :: () -> (vblank_interrupt: bool) {
             plane_0 := cart.chr_rom[cast(u16)nametable_entry * 16 + row % 8];
             plane_1 := cart.chr_rom[cast(u16)nametable_entry * 16 + row % 8 + 8];
 
-            plane_0_bit := (plane_0 >> ((col-1) % 8)) & 1;
-            plane_1_bit := (plane_1 >> ((col-1) % 8)) & 1;
+            plane_0_bit := (plane_0 >> (7 - (col-1) % 8)) & 1;
+            plane_1_bit := (plane_1 >> (7 - (col-1) % 8)) & 1;
 
             // step 5:
             palette_entry := plane_0_bit + (plane_1_bit * 2) + (colour_bits * 4);
