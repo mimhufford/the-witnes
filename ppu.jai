@@ -134,8 +134,8 @@ ppu_tick :: () -> (vblank_interrupt: bool) {
 
             // step 3 & 4:
             // @TODO: just going straight to chr_rom here, should this be mapped somehow?
-            plane_0 := cart.chr_rom[nametable_entry * 16 + row % 8];
-            plane_1 := cart.chr_rom[nametable_entry * 16 + row % 8 + 8];
+            plane_0 := cart.chr_rom[cast(u16)nametable_entry * 16 + row % 8];
+            plane_1 := cart.chr_rom[cast(u16)nametable_entry * 16 + row % 8 + 8];
 
             plane_0_bit := (plane_0 >> ((col-1) % 8)) & 1;
             plane_1_bit := (plane_1 >> ((col-1) % 8)) & 1;
