@@ -14,7 +14,7 @@ main :: () {
     // initalise the window and pixel buffer
     window = Window.create_window(256, 240, "The WitNES", 100, 100);
     set_render_target(window);
-    bitmap_alloc(*bitmap, 256, 240, .RGB8);
+    bitmap_alloc(*bitmap, 256, 240, .RGB8); // @TODO: can probably not alloc and use ppu buffer directly?
     bitmap.data.data = xx ppu.buffer.data;
 
     // @TEMPORARY: testing the ppu using nestest.nes
@@ -57,10 +57,17 @@ render :: () {
     update_window_events();
 
     for events_this_frame {
-        if it.type == {
-            case .KEYBOARD;
-            if it.key_pressed && it.key_code == .ESCAPE {
-                exit(0);
+        if it.type == .KEYBOARD && it.key_pressed && !it.repeat{
+            if it.key_code == {
+                case .ESCAPE;      exit(0);
+                case .ARROW_UP;    print("UP");
+                case .ARROW_DOWN;  print("DOWN");
+                case .ARROW_LEFT;  print("LEFT");
+                case .ARROW_RIGHT; print("RIGHT");
+                case .ENTER;       print("START");
+                case .BACKSPACE;   print("SELECT");
+                case #char "Z";    print("A");
+                case #char "X";    print("B");
             }
         }
     }
