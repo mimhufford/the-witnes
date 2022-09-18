@@ -10,6 +10,7 @@ main :: () {
 
     // initalise the system with the default power on state
     cpu_reset();
+    render_init();
 
     // @TEMPORARY: testing the ppu using nestest.nes
     // {
@@ -42,6 +43,7 @@ main :: () {
         vblank |= ppu_tick();
 
         if vblank cpu_nmi();
+        if vblank render(); // @TEMP: didn't think too hard about this
     }
     // }
 }
@@ -95,3 +97,4 @@ cart : Cartridge;
 #load "cartridge.jai";
 #load "cpu.jai";
 #load "ppu.jai";
+#load "render.jai";
