@@ -12,7 +12,7 @@ main :: () {
     cpu_reset();
     
     // initalise the window and pixel buffer
-    window = Window.create_window(256, 240, "The WitNES", 100, 100);
+    window = Window.create_window(256 * SCALE, 240 * SCALE, "The WitNES", 100, 100);
     set_render_target(window);
     bitmap_alloc(*bitmap, 256, 240, .RGB8); // @TODO: can probably not alloc and use ppu buffer directly?
     bitmap.data.data = xx ppu.buffer.data;
@@ -49,6 +49,7 @@ main :: () {
 
         if vblank cpu_nmi();
         if vblank render(); // @TEMP: didn't think too hard about this
+        if vblank sleep_milliseconds(1); // @TEMP throttle until we have better timing
     }
     // }
 }
@@ -75,7 +76,7 @@ render :: () {
     texture_load_from_bitmap(*texture, *bitmap);
     set_shader_for_images(*texture);
     immediate_begin();
-    immediate_quad(0, 0, 256, 240, .{1, 1, 1, 1});
+    immediate_quad(0, 0, 256 * SCALE, 240 * SCALE, .{1, 1, 1, 1});
     immediate_flush();
     swap_buffers(window);
 }
@@ -87,6 +88,7 @@ ppu  : PPU;
 apu  : [  32]u8;
 cart : Cartridge;
 
+SCALE :: 2;
 window : Window.Window_Type;
 bitmap : Bitmap;
 texture : Texture;
