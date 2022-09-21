@@ -61,14 +61,26 @@ render :: () {
         if it.type == .KEYBOARD && it.key_pressed && !it.repeat{
             if it.key_code == {
                 case .ESCAPE;      exit(0);
-                case .ARROW_UP;    print("UP");
-                case .ARROW_DOWN;  print("DOWN");
-                case .ARROW_LEFT;  print("LEFT");
-                case .ARROW_RIGHT; print("RIGHT");
-                case .ENTER;       print("START");
-                case .BACKSPACE;   print("SELECT");
-                case #char "Z";    print("A");
-                case #char "X";    print("B");
+                case .ARROW_UP;    joypad.up     = true;
+                case .ARROW_DOWN;  joypad.down   = true;
+                case .ARROW_LEFT;  joypad.left   = true;
+                case .ARROW_RIGHT; joypad.right  = true;
+                case .ENTER;       joypad.start  = true;
+                case .BACKSPACE;   joypad.select = true;
+                case #char "Z";    joypad.a      = true;
+                case #char "X";    joypad.b      = true;
+            }
+        }
+        else if it.type == .KEYBOARD && !it.key_pressed {
+            if it.key_code == {
+                case .ARROW_UP;    joypad.up     = false;
+                case .ARROW_DOWN;  joypad.down   = false;
+                case .ARROW_LEFT;  joypad.left   = false;
+                case .ARROW_RIGHT; joypad.right  = false;
+                case .ENTER;       joypad.start  = false;
+                case .BACKSPACE;   joypad.select = false;
+                case #char "Z";    joypad.a      = false;
+                case #char "X";    joypad.b      = false;
             }
         }
     }
@@ -82,11 +94,12 @@ render :: () {
 }
 
 
-ram  : [2048]u8;
-cpu  : CPU;
-ppu  : PPU;
-apu  : [  32]u8;
-cart : Cartridge;
+ram    : [2048]u8;
+cpu    : CPU;
+ppu    : PPU;
+apu    : [  32]u8;
+cart   : Cartridge;
+joypad : Joypad;
 
 SCALE :: 2;
 window : Window.Window_Type;
@@ -97,6 +110,7 @@ texture : Texture;
 #load "cpu.jai";
 #load "ppu.jai";
 #load "mapper.jai";
+#load "joypad.jai";
 
 #import "Basic";
 #import "Simp";
