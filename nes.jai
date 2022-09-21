@@ -58,29 +58,19 @@ render :: () {
     update_window_events();
 
     for events_this_frame {
-        if it.type == .KEYBOARD && it.key_pressed && !it.repeat{
+        if it.type == .QUIT  exit(0);
+
+        if it.type == .KEYBOARD {
             if it.key_code == {
                 case .ESCAPE;      exit(0);
-                case .ARROW_UP;    joypad.up     = true;
-                case .ARROW_DOWN;  joypad.down   = true;
-                case .ARROW_LEFT;  joypad.left   = true;
-                case .ARROW_RIGHT; joypad.right  = true;
-                case .ENTER;       joypad.start  = true;
-                case .BACKSPACE;   joypad.select = true;
-                case #char "Z";    joypad.a      = true;
-                case #char "X";    joypad.b      = true;
-            }
-        }
-        else if it.type == .KEYBOARD && !it.key_pressed {
-            if it.key_code == {
-                case .ARROW_UP;    joypad.up     = false;
-                case .ARROW_DOWN;  joypad.down   = false;
-                case .ARROW_LEFT;  joypad.left   = false;
-                case .ARROW_RIGHT; joypad.right  = false;
-                case .ENTER;       joypad.start  = false;
-                case .BACKSPACE;   joypad.select = false;
-                case #char "Z";    joypad.a      = false;
-                case #char "X";    joypad.b      = false;
+                case .ARROW_UP;    joypad.up     = it.key_pressed && !it.repeat;
+                case .ARROW_DOWN;  joypad.down   = it.key_pressed && !it.repeat;
+                case .ARROW_LEFT;  joypad.left   = it.key_pressed && !it.repeat;
+                case .ARROW_RIGHT; joypad.right  = it.key_pressed && !it.repeat;
+                case .ENTER;       joypad.start  = it.key_pressed && !it.repeat;
+                case .BACKSPACE;   joypad.select = it.key_pressed && !it.repeat;
+                case #char "Z";    joypad.a      = it.key_pressed && !it.repeat;
+                case #char "X";    joypad.b      = it.key_pressed && !it.repeat;
             }
         }
     }
