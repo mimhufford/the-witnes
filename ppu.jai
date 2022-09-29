@@ -21,7 +21,11 @@ PPU :: struct {
 
     oam_address              : u8;    // oamaddr   - 0x2003 - 0b_1111_1111
     oam_data                 : u8;    // oamdata   - 0x2004 - 0b_1111_1111
-    ppu_scroll               : u16;   // ppuscroll - 0x2005 - 0b_1111_1111
+
+    ppu_scroll_x             : u8;    // ppuscroll - 0x2005
+    ppu_scroll_y             : u8;    // ppuscroll - 0x2005
+    ppu_scroll_toggle        : bool;
+
     ppu_address              : u16;   // ppuaddr   - 0x2006 - 0b_1111_1111
 
     vram   : [16 * 1024]u8;
@@ -87,12 +91,16 @@ ppu_write_byte :: (address: u16, value: u8) {
         emphasise_blue           = (value & 0b_1000_0000) > 0;
     } else if address == 3 {
         // OAMADDR
-        oam_address              = value;
+        oam_address = value;
     } else if address == 4 {
         // OAMDATA
-        oam_data                 = value;
+        oam_data = value;
     } else if address == 5 {
-        // @TODO: PPUSCROLL
+        // PPUSCROLL
+        if !ppu_scroll_toggle then ppu_scroll_x = value;
+        else                       ppu_scroll_y = value;
+        ppu_scroll_toggle = !ppu_scroll_toggle;
+        print("% % % %\n", ppu_scroll_x, ppu_scroll_y, ppu_scroll_toggle, value);
     } else if address == 6 {
         // PPUADDR
         ppu_address <<= 8;
