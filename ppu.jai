@@ -74,8 +74,8 @@ ppu_write_byte :: (address: u16, value: u8) {
         // PPUCTRL
         base_nametable_address   = cast(u16)0x2000 + (cast(u16)value & 0b11) * 0x400;
         vram_address_increment   = 1 + ((value & 0b_0000_0100) >> 2) * 31;
-        sprite_table_address     = (cast(u16)value & 0b_0000_1000) * 0x1000;
-        background_table_address = (cast(u16)value & 0b_0001_0000) * 0x1000;
+        sprite_table_address     = (cast(u16)(value & 0b_0000_1000 > 0)) * 0x1000;
+        background_table_address = (cast(u16)(value & 0b_0001_0000 > 0)) * 0x1000;
         big_sprites              = (value & 0b_0010_0000) > 0;
         generate_interrupt       = (value & 0b_1000_0000) > 0;
     }
@@ -100,7 +100,6 @@ ppu_write_byte :: (address: u16, value: u8) {
         if !ppu_scroll_toggle then ppu_scroll_x = value;
         else                       ppu_scroll_y = value;
         ppu_scroll_toggle = !ppu_scroll_toggle;
-        print("% % % %\n", ppu_scroll_x, ppu_scroll_y, ppu_scroll_toggle, value);
     } else if address == 6 {
         // PPUADDR
         ppu_address <<= 8;
@@ -142,8 +141,8 @@ ppu_tick :: () -> (vblank_interrupt: bool) {
 
             // step 3 & 4:
             // @TODO: just going straight to chr_rom here, should this be mapped somehow?
-            plane_0 := cart.chr_rom[cast(u16)nametable_entry * 16 + row % 8];
-            plane_1 := cart.chr_rom[cast(u16)nametable_entry * 16 + row % 8 + 8];
+            plane_0 := cart.chr_rom[base_nametable_address + cast(u16)nametable_entry * 16 + row % 8];
+            plane_1 := cart.chr_rom[base_nametable_address + cast(u16)nametable_entry * 16 + row % 8 + 8];
 
             plane_0_bit := (plane_0 >> (7 - (col-1) % 8)) & 1;
             plane_1_bit := (plane_1 >> (7 - (col-1) % 8)) & 1;
@@ -157,7 +156,6 @@ ppu_tick :: () -> (vblank_interrupt: bool) {
                 palette := vram[0x3F00 + palette_entry];
                 buffer[row * 256 + col - 1] = colour_palette[palette];
             }
-
         } else if col <= 320 {
 
         } else if col <= 336 {

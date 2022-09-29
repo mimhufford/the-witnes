@@ -334,7 +334,8 @@ cpu_tick :: (opcode: u8) {
         op_ticks += 3;
         pc += 1;
 
-        case; assert(false, "Unhandled opcode [%]", formatInt(opcode, base=16));
+        case;
+        assert(false, "Unhandled opcode [%]", formatInt(opcode, base=16));
     }
 }
 
